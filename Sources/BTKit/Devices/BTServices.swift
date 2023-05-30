@@ -37,17 +37,22 @@ public enum BTServiceType {
 
 public enum BTGATTDeviceInformationService {
     case firmwareRevision(BTGATTDeviceInformationFirmwareRevisionService)
-
+    case serialRevision(BTGATTDeviceInformationSerialRevisionService)
+    
     var uuid: CBUUID {
         switch self {
         case .firmwareRevision(let value):
             return value.uuid
+        case .serialRevision(let value):
+            return value.uuid
         }
     }
-
+    
     var characteristic: CBUUID {
         switch self {
         case .firmwareRevision(let value):
+            return value.characteristic
+        case .serialRevision(let value):
             return value.characteristic
         }
     }
@@ -67,6 +72,24 @@ public enum BTGATTDeviceInformationFirmwareRevisionService {
         switch self {
         case .standard:
             return CBUUID(string: "2a26")
+        }
+    }
+}
+
+public enum BTGATTDeviceInformationSerialRevisionService {
+    case standard
+    
+    var uuid: CBUUID {
+        switch self {
+        case .standard:
+            return CBUUID(string: "180a")
+        }
+    }
+    
+    var characteristic: CBUUID {
+        switch self {
+        case .standard:
+            return CBUUID(string: "2a25")
         }
     }
 }
@@ -217,60 +240,64 @@ public struct BTRuuviServices {
 }
 
 public struct BTGATTService {
-    public func firmwareRevision<T:AnyObject>(for observer: T, uuid: String, options: BTScannerOptionsInfo? = nil, progress: ((BTServiceProgress) -> Void)? = nil, result: @escaping (T, Result<String, BTError>) -> Void) {
+    public func serialRevision<T:AnyObject>(
+        for observer: T,
+        uuid: String,
+        options: BTScannerOptionsInfo? = nil,
+        progress: ((BTServiceProgress) -> Void)? = nil,
+        result: @escaping (T, Result<String, BTError>) -> Void
+    ) {
+        serveRevision(
+            for: observer,
+            uuid: uuid,
+            type: .deviceInformation(.serialRevision(.standard)),
+            options: options,
+            progress: progress,
+            result: result
+        )
+    }
+    
+    public func firmwareRevision<T:AnyObject>(
+        for observer: T,
+        uuid: String,
+        options: BTScannerOptionsInfo? = nil,
+        progress: ((BTServiceProgress) -> Void)? = nil,
+        result: @escaping (T, Result<String, BTError>) -> Void
+    ) {
+        serveRevision(
+            for: observer,
+            uuid: uuid,
+            type: .deviceInformation(.firmwareRevision(.standard)),
+            options: options,
+            progress: progress,
+            result: result
+        )
+    }
+    
+    private func serveRevision<T:AnyObject>(
+        for observer: T,
+        uuid: String,
+        type: BTGATTServiceType,
+        options: BTScannerOptionsInfo?,
+        progress: ((BTServiceProgress) -> Void)? = nil,
+        result: @escaping (T, Result<String, BTError>) -> Void
+    ) {
         var connectToken: ObservationToken?
         progress?(.connecting)
         connectToken = BTKit.background.connect(for: observer, uuid: uuid, options: options, connected: { (observer, connectResult) in
             connectToken?.invalidate()
             switch connectResult {
-            case .already:
+            case .already, .just:
                 var serveToken: ObservationToken?
                 progress?(.serving)
-                serveToken = self.serveFirmware(observer, uuid, options) { observer, serveResult in
+                serveToken = self.serve(observer, uuid, type, options) { observer, serveResult in
                     serveToken?.invalidate()
                     var disconnectToken: ObservationToken?
                     progress?(.disconnecting)
                     disconnectToken = BTKit.background.disconnect(for: observer, uuid: uuid, options: options) { (observer, disconnectResult) in
                         disconnectToken?.invalidate()
                         switch disconnectResult {
-                        case .already:
-                            progress?(.success)
-                            result(observer, serveResult)
-                        case .just:
-                            progress?(.success)
-                            result(observer, serveResult)
-                        case .stillConnected:
-                            progress?(.success)
-                            result(observer, serveResult)
-                        case .bluetoothWasPoweredOff:
-                            progress?(.success)
-                            result(observer, serveResult)
-                        case .failure(let error):
-                            progress?(.failure(error))
-                            result(observer, .failure(error))
-                        }
-                    }
-                }
-            case .just:
-                var serveToken: ObservationToken?
-                progress?(.serving)
-                serveToken = self.serveFirmware(observer, uuid, options) { observer, serveResult in
-                    serveToken?.invalidate()
-                    var disconnectToken: ObservationToken?
-                    progress?(.disconnecting)
-                    disconnectToken = BTKit.background.disconnect(for: observer, uuid: uuid, options: options) { (observer, disconnectResult) in
-                        disconnectToken?.invalidate()
-                        switch disconnectResult {
-                        case .already:
-                            progress?(.success)
-                            result(observer, serveResult)
-                        case .just:
-                            progress?(.success)
-                            result(observer, serveResult)
-                        case .stillConnected:
-                            progress?(.success)
-                            result(observer, serveResult)
-                        case .bluetoothWasPoweredOff:
+                        case .already, .just, .stillConnected, .bluetoothWasPoweredOff:
                             progress?(.success)
                             result(observer, serveResult)
                         case .failure(let error):
@@ -287,10 +314,21 @@ public struct BTGATTService {
             }
         })
     }
-
-    private func serveFirmware<T: AnyObject>(_ observer: T, _ uuid: String, _ options: BTScannerOptionsInfo?, _ result: @escaping (T, Result<String, BTError>) -> Void) -> ObservationToken? {
+    
+    private func serve<T: AnyObject>(
+        _ observer: T,
+        _ uuid: String,
+        _ type: BTGATTServiceType,
+        _ options: BTScannerOptionsInfo?,
+        _ result: @escaping (T, Result<String, BTError>) -> Void
+    ) -> ObservationToken? {
         let info = BTKitParsedOptionsInfo(options)
-        let serveToken = BTKit.background.scanner.serveGATT(observer, for: uuid, .deviceInformation(.firmwareRevision(.standard)), options: options, request: { (observer, peripheral, characteristic) in
+        let serveToken = BTKit.background.scanner.serveGATT(
+            observer,
+            for: uuid,
+            type,
+            options: options,
+            request: { (observer, peripheral, characteristic) in
             if let characteristic = characteristic {
                 peripheral?.readValue(for: characteristic)
             } else {

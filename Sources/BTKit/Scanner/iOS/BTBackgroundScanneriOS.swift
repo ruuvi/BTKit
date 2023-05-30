@@ -965,7 +965,7 @@ extension BTBackgroundScanneriOS: CBPeripheralDelegate {
                 if let uart = service as? BTUARTService {
                     peripheral.discoverCharacteristics([uart.txUUID, uart.rxUUID], for: d)
                 } else if let deviceInformation = service as? DeviceInformationService {
-                    peripheral.discoverCharacteristics([deviceInformation.firmwareRevision], for: d)
+                    peripheral.discoverCharacteristics([deviceInformation.firmwareRevision, deviceInformation.serialRevision], for: d)
                 }
             }
         }
@@ -991,7 +991,7 @@ extension BTBackgroundScanneriOS: CBPeripheralDelegate {
             .compactMap({ handler -> DeviceInformationService? in
                 return handler as? DeviceInformationService
             }).forEach { handler in
-                if let firmwareRevision = characteristics.first(where: { $0.uuid == handler.firmwareRevision }) {
+                if let firmwareRevision = characteristics.first(where: { $0.uuid == handler.firmwareRevision  || $0.uuid == handler.serialRevision }) {
                     gattRegistrations.update(with: GATTRegistration(service: service, peripheral: peripheral, characteristic: firmwareRevision))
                     gattRegistrations
                     .filter({
