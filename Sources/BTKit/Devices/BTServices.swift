@@ -616,6 +616,26 @@ public struct BTKitRuuviNUSService {
             }
         })
     }
+
+    public func disconnect<T:AnyObject>(
+        for observer: T,
+        uuid: String,
+        options: BTScannerOptionsInfo?,
+        result: @escaping (T, Result<BTDisconnectResult, BTError>) -> Void
+    ) {
+        var disconnectToken: ObservationToken?
+        disconnectToken = BTKit.background.disconnect(
+            for: observer, uuid: uuid, options: options
+        ) { (observer, disconnectResult) in
+            disconnectToken?.invalidate()
+            switch disconnectResult {
+            case .already, .just, .stillConnected, .bluetoothWasPoweredOff:
+                result(observer, .success(disconnectResult))
+            case .failure(let error):
+                result(observer, .failure(error))
+            }
+        }
+    }
 }
 
 public struct RuuviTagEnvLog {
