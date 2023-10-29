@@ -409,8 +409,9 @@ public struct BTKitRuuviNUSService {
                                 result(observer, .failure(error))
                             }
                         }
-                    case .failure:
-                        break
+                    case let .failure(error):
+                        progress?(.failure(error))
+                        result(observer, .failure(error))
                     }
 
                 }
@@ -445,8 +446,9 @@ public struct BTKitRuuviNUSService {
                                 result(observer, .failure(error))
                             }
                         }
-                    case .failure:
-                        break
+                    case .failure(let error):
+                        progress?(.failure(error))
+                        result(observer, .failure(error))
                     }
                 }
             case .failure(let error):

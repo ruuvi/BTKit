@@ -323,7 +323,10 @@ class BTBackgroundScanneriOS: NSObject, BTBackgroundScanner {
     private func requestService(observation: GATTServiceObservation, registration: GATTRegistration) {
         observation.request?(registration.peripheral, registration.characteristic)
         observation.request = nil // clear to avoid double call
-
+        enableWatchdogForServiceTimeout(observation: observation)
+    }
+    
+    private func enableWatchdogForServiceTimeout(observation: GATTServiceObservation) {
         if observation.serviceTimeout > 0 {
             let serviceRequestDate = Date()
             observation.timer?.cancel()
@@ -351,7 +354,10 @@ class BTBackgroundScanneriOS: NSObject, BTBackgroundScanner {
     private func requestService(observation: UARTServiceObservation, registration: UARTRegistration) {
         observation.request?(registration.peripheral, registration.rx, registration.tx)
         observation.request = nil // clear to avoid double call
-        
+        enableWatchdogForServiceTimeout(observation: observation)
+    }
+    
+    private func enableWatchdogForServiceTimeout(observation: UARTServiceObservation) {
         if observation.serviceTimeout > 0 {
             let serviceRequestDate = Date()
             observation.timer?.cancel()
@@ -869,7 +875,7 @@ extension BTBackgroundScanneriOS: CBCentralManagerDelegate {
                                 addConnecting(peripheral: peripheral)
                                 manager.connect(peripheral)
                             }
-                        } )   
+                        } )
                 }
             }
             restorePeripherals.removeAll()
@@ -899,6 +905,8 @@ extension BTBackgroundScanneriOS: CBCentralManagerDelegate {
         removeConnecting(peripheral: peripheral)
         addConnected(peripheral: peripheral)
         peripheral.discoverServices(services.map({ $0.uuid }))
+        observations.gattService.forEach { enableWatchdogForServiceTimeout(observation: $0.value) }
+        observations.uartService.forEach { enableWatchdogForServiceTimeout(observation: $0.value) }
     }
     
     func centralManager(_ central: CBCentralManager, didDisconnectPeripheral peripheral: CBPeripheral, error: Error?) {
@@ -969,6 +977,8 @@ extension BTBackgroundScanneriOS: CBPeripheralDelegate {
                 }
             }
         }
+        observations.gattService.forEach { enableWatchdogForServiceTimeout(observation: $0.value) }
+        observations.uartService.forEach { enableWatchdogForServiceTimeout(observation: $0.value) }
     }
     
     func peripheral(_ peripheral: CBPeripheral, didDiscoverCharacteristicsFor service: CBService, error: Error?) {
@@ -1011,6 +1021,8 @@ extension BTBackgroundScanneriOS: CBPeripheralDelegate {
                     })
                 }
             }
+        observations.gattService.forEach { enableWatchdogForServiceTimeout(observation: $0.value) }
+        observations.uartService.forEach { enableWatchdogForServiceTimeout(observation: $0.value) }
     }
     
     func peripheral(_ peripheral: CBPeripheral, didWriteValueFor descriptor: CBDescriptor, error: Error?) {
