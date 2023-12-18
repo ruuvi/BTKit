@@ -11,7 +11,7 @@ public struct RuuviDecoderiOS: BTDecoder {
         let versionOffset = 7
         let version = Int(data[versionOffset])
         let parsableOffset = 5
-        let parsable = Data(data[parsableOffset...data.count - parsableOffset])
+        let parsable = Data(data[parsableOffset...data.count - 1])
         switch version {
         case 2:
             let ruuvi = parsable.ruuvi2()
