@@ -14,18 +14,22 @@ public struct RuuviDecoderiOS: BTDecoder {
         let parsable = Data(data[parsableOffset...data.count - 1])
         switch version {
         case 2:
+            guard parsable.count > 5 else { return nil }
             let ruuvi = parsable.ruuvi2()
             let tag = RuuviData2(uuid: uuid, rssi: rssi, isConnectable: isConnectable, version: ruuvi.version, temperature: ruuvi.temperature, humidity: ruuvi.humidity, pressure: ruuvi.pressure)
             return .ruuvi(.tag(.n2(tag)))
         case 3:
+            guard parsable.count > 15 else { return nil }
             let ruuvi = parsable.ruuvi3()
             let tag = RuuviData3(uuid: uuid, rssi: rssi, isConnectable: isConnectable, version: Int(version), humidity: ruuvi.humidity, temperature: ruuvi.temperature, pressure: ruuvi.pressure, accelerationX: ruuvi.accelerationX, accelerationY: ruuvi.accelerationY, accelerationZ: ruuvi.accelerationZ, voltage: ruuvi.voltage)
             return .ruuvi(.tag(.n3(tag)))
         case 4:
+            guard parsable.count > 5 else { return nil }
             let ruuvi = parsable.ruuvi4()
             let tag = RuuviData4(uuid: uuid, rssi: rssi, isConnectable: isConnectable, version: ruuvi.version, temperature: ruuvi.temperature, humidity: ruuvi.humidity, pressure: ruuvi.pressure)
             return .ruuvi(.tag(.n4(tag)))
         case 5:
+            guard parsable.count > 19 else { return nil }
             let ruuvi = parsable.ruuvi5()
             let tag = RuuviData5(uuid: uuid, rssi: rssi, isConnectable: isConnectable, version: Int(version), humidity: ruuvi.humidity, temperature: ruuvi.temperature, pressure: ruuvi.pressure, accelerationX: ruuvi.accelerationX, accelerationY: ruuvi.accelerationY, accelerationZ: ruuvi.accelerationZ, voltage: ruuvi.voltage, movementCounter: ruuvi.movementCounter, measurementSequenceNumber: ruuvi.measurementSequenceNumber, txPower: ruuvi.txPower, mac: ruuvi.mac)
             return .ruuvi(.tag(.n5(tag)))
