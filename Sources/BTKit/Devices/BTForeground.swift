@@ -1,6 +1,7 @@
 public struct BTForeground {
     public static let shared = BTForeground()
-    
+    public static let publisher = BTKitForegroundPublisher(foreground: .shared)
+
     let scanner: BTScanner = BTScanneriOS(decoders: [RuuviDecoderiOS()])
     
     public var bluetoothState: BTScannerState { return scanner.bluetoothState }
