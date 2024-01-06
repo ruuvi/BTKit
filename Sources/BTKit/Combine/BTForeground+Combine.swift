@@ -1,5 +1,6 @@
 import Combine
 
+@available(iOS 13.0, *)
 public final class BTKitForegroundPublisher {
     public lazy var ruuviTag: AnyPublisher<RuuviTag, Never> = {
         ruuviTagSubject
