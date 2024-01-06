@@ -1,5 +1,6 @@
 public struct BTForeground {
     public static let shared = BTForeground()
+    @available(iOS 13.0, *)
     public static let publisher = BTKitForegroundPublisher(foreground: .shared)
 
     let scanner: BTScanner = BTScanneriOS(decoders: [RuuviDecoderiOS()])
