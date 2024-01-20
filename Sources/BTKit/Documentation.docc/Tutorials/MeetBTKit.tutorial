@@ -6,7 +6,7 @@
     @Chapter(name: "Hello Ruuvi!") {
         Your very first app.
         
-        @Image(source: "HelloRuuvi-App-0.png", alt: "Final app")
+        @Image(source: "hello-ruuvi-app-0.png", alt: "Final app")
         
         @TutorialReference(tutorial: "doc:HelloRuuvi")
     }
