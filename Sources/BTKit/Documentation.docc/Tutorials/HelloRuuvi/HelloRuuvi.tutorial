@@ -12,19 +12,19 @@
             @Step {
                 Open Xcode and click on "Create New Project...", select Multiplatform app, click "Next", give it a name of _HelloRuuvi_, click "Next", click "Create".
                 
-                @Image(source: "HelloRuuvi-Xcode-0.png", alt: "Multiplatform project type selction on Xcode")
+                @Image(source: "hello-ruuvi-xcode-0.png", alt: "Multiplatform project type selction on Xcode")
             }
             
             @Step {
                 You should land on default Xcode project file `ContentView.swift` with a preview of "Hello World!" string.
                 
-                @Image(source: "HelloRuuvi-Xcode-1.png", alt: "Default Xcode project")
+                @Image(source: "hello-ruuvi-xcode-1.png", alt: "Default Xcode project")
             }
             
             @Step {
                 Add a Swift Package deppendency on BTKit by clicking _HelloRuuvi_ on top left corner, selecting _HelloRuuvi_ project and pressing a plus sign on Package Dependencies tab. Enter `https://github.com/ruuvi/BTKit` in Search field at the top right and click on "Add Package". 
                 
-                @Image(source: "HelloRuuvi-Xcode-2.png", alt: "Add BTKit")
+                @Image(source: "hello-ruuvi-xcode-2.png", alt: "Add BTKit")
             }
         }
     }
@@ -38,19 +38,19 @@
             @Step {
                 Select a _HelloRuuvi_ target and navigate to the `Info` section. Copy paste `NSBluetoothAlwaysUsageDescription` and paste it after right clicking on the list and selecting `Add Row`. 
                 
-                @Image(source: "HelloRuuvi-Permissions-0.png", alt: "Request Bluetooth permission")
+                @Image(source: "hello-ruuvi-permissions-0.png", alt: "Request Bluetooth permission")
             }
             
             @Step {
                 Fill the `NSBluetoothAlwaysUsageDescription` with something like `Bluetooth is used to listen to RuuviTags`.
                 
-                @Image(source: "HelloRuuvi-Permissions-1.png", alt: "Fill Bluetooth description")
+                @Image(source: "hello-ruuvi-permissions-1.png", alt: "Fill Bluetooth description")
             }
             
             @Step {
                 In order macOS app to be able to use Bluetooth, navigate to `Signing & Capabilities` tab and add a checkmark for `Bluetooth` `App Sandbox` Hardware option.  
                 
-                @Image(source: "HelloRuuvi-Permissions-2.png", alt: "Add BTKit")
+                @Image(source: "hello-ruuvi-permissions-2.png", alt: "Add BTKit")
             }
         }
     }
@@ -62,7 +62,7 @@
         
         @Steps {
             @Step {
-                Select ``ContentView.swift`` file on the right column. 
+                Select `ContentView.swift` file on the right column. 
                 
                 @Code(name: "ContentView.swift", file: ContentView-0.swift)
             }
@@ -108,7 +108,7 @@
                 Build and run either on macOS or iOS! If you have `RuuviTag` sensors in the range of Bluetooth, you will see the data. 
                 But once shown, the data is not being updated... We will address this in the next tutorials.
                 
-                @Image(source: "HelloRuuvi-Content-0.png", alt: "Final app")
+                @Image(source: "hello-ruuvi-content-0.png", alt: "Final app")
             }
         }
     }
