@@ -1,0 +1,13 @@
+@Tutorials(name: "BTKit") {
+    @Intro(title: "Meet the BTKit") {
+        A library for building applications to listen and interact with Ruuvi devices.
+    }
+    
+    @Chapter(name: "Hello Ruuvi!") {
+        Your very first app.
+        
+        @Image(source: "HelloRuuvi-App-0.png", alt: "Final app")
+        
+        @TutorialReference(tutorial: "doc:HelloRuuvi")
+    }
+}
