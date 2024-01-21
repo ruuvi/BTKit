@@ -1,0 +1,115 @@
+@Tutorial(time: 45) {
+    @Intro(title: "Is it... updating?") {
+        In previous tutorial we did a simple app that displays list of RuuviTags. The problem with it is - it doesn't update... Let's improve!
+    }
+    
+    @Section(title: "Observable") {
+        @ContentAndMedia {
+            We will use Apple `Observable` mechanism to get the updates. 
+        }
+        
+        @Steps {
+            @Step {
+                Let's quickly recall where we are at this very moment.
+                
+                @Code(name: "ContentView.swift", file: ContentView-6.swift)
+            }
+            
+            @Step {
+                Let's start by adding an `Observable` `ViewModel` class. 
+                
+                @Code(name: "ContentView.swift", file: ContentView-7.swift)
+            }
+            
+            @Step {
+                Let's continue by adding an `Observable` `Storage` class. 
+                
+                @Code(name: "ContentView.swift", file: ContentView-8.swift)
+            }
+        }
+    }
+        
+    @Section(title: "RuuviTagView.swift file") {
+        @ContentAndMedia {
+            We will extract RuuviTag view to separate file. 
+        }
+        
+        @Steps {
+            @Step {
+                Let's add a new Swift file to the project.
+                
+                @Image(source: "ruuvi-updates-0.png", alt: "Add a file")
+            }
+            
+            @Step {
+                Select the `SwiftUIView` type and give it a name of `RuuviTagView.swift`. 
+                
+                @Image(source: "ruuvi-updates-1.png", alt: "Add a file")
+            }
+            
+            @Step {
+                Let's remove the comment and `#Preview` sections. We will have this file at the end selected in Xcode.  
+                
+                @Code(name: "RuuviTagView.swift", file: RuuviTagView-0.swift)
+            }
+        }
+    }
+        
+    @Section(title: "RuuviTagView internals") {
+        @ContentAndMedia {
+            We will use the RuuviTagView to display RuuviTags. 
+        }
+        
+        @Steps {
+            @Step {
+                We are still on `RuuviTagView.swift`.
+                
+                @Code(name: "RuuviTagView.swift", file: RuuviTagView-0.swift)
+            }
+            
+            @Step {
+                Let's add a `@Bindable` variable to the `RuuviTagView.swift`.
+                
+                @Code(name: "RuuviTagView.swift", file: RuuviTagView-1.swift)
+            }
+            
+            @Step {
+                Let's implement the display logic in the `RuuviTagView.swift`.
+                
+                @Code(name: "RuuviTagView.swift", file: RuuviTagView-2.swift)
+            }
+            
+            @Step {
+                And add the date time field in the `RuuviTagView.swift`.
+                
+                @Code(name: "RuuviTagView.swift", file: RuuviTagView-3.swift)
+            }
+        }
+    }
+        
+    @Section(title: "Back to ContentView.swift") {
+        @ContentAndMedia {
+            We will use the RuuviTagView in the List. 
+        }
+        
+        @Steps {
+            @Step {
+                We are on `ContentView.swift`. 
+                
+                @Code(name: "ContentView.swift", file: ContentView-9.swift)
+            }
+            
+            @Step {
+                Let's use our `Storage` and `ViewModel`. 
+                
+                @Code(name: "ContentView.swift", file: ContentView-10.swift)
+            }
+            
+            @Step {
+                Let's build and rub the app!
+                
+                @Image(source: "ruuvi-updates-2.png", alt: "Updates app")
+            }
+        }
+    }
+}
