@@ -9,5 +9,6 @@
         @Image(source: "hello-ruuvi-app-0.png", alt: "Final app")
         
         @TutorialReference(tutorial: "doc:HelloRuuvi")
+        @TutorialReference(tutorial: "doc:RuuviUpdates")
     }
 }
