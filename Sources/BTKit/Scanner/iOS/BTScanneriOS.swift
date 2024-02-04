@@ -47,7 +47,8 @@ class BTScanneriOS: NSObject, BTScanner {
     private var lastSeen = [BTDevice: Date]()
     private var lostTimer: DispatchSourceTimer?
     private var restartTimer: DispatchSourceTimer?
-    
+    private var isScanning: Bool = false
+
     deinit {
         NotificationCenter.default.removeObserver(self)
         lostTimer?.cancel()
@@ -68,7 +69,8 @@ class BTScanneriOS: NSObject, BTScanner {
     
     @objc func willResignActiveNotification(_ notification: Notification)  {
         queue.async { [weak self] in
-            self?.manager.stopScan()
+            guard let self, self.isScanning else { return }
+            self.stopScanning()
         }
     }
     
@@ -82,7 +84,7 @@ class BTScanneriOS: NSObject, BTScanner {
         restartTimer = DispatchSource.makeTimerSource(queue: queue)
         restartTimer?.schedule(deadline: .now() + 60, repeating: .seconds(60))
         restartTimer?.setEventHandler { [weak self] in
-            self?.manager.stopScan()
+            self?.stopScanning()
             self?.startIfNeeded()
         }
         restartTimer?.activate()
@@ -120,6 +122,7 @@ class BTScanneriOS: NSObject, BTScanner {
     
     private func startIfNeeded() {
         if shouldBeRunning() && !manager.isScanning && isReady {
+            isScanning = true
             manager.scanForPeripherals(withServices: nil, options: [CBCentralManagerScanOptionAllowDuplicatesKey: NSNumber(value: true)])
         }
         
@@ -131,7 +134,7 @@ class BTScanneriOS: NSObject, BTScanner {
     
     private func stopIfNeeded() {
         if !shouldBeRunning() && manager.isScanning {
-            manager.stopScan()
+            stopScanning()
         }
         
         let shouldObserveLostDevices = observations.lost.count > 0
@@ -139,7 +142,12 @@ class BTScanneriOS: NSObject, BTScanner {
             stopLostDevicesTimer()
         }
     }
-    
+
+    private func stopScanning() {
+        isScanning = false
+        manager.stopScan()
+    }
+
     private func shouldBeRunning() -> Bool {
         return observations.state.count > 0
         || observations.device.count > 0
