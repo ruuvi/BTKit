@@ -144,6 +144,7 @@ class BTScanneriOS: NSObject, BTScanner {
     }
 
     private func stopScanning() {
+        guard isScanning else { return }
         isScanning = false
         manager.stopScan()
     }
