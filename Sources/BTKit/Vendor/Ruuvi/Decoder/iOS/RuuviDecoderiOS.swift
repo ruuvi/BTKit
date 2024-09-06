@@ -37,7 +37,7 @@ public struct RuuviDecoderiOS: BTDecoder {
             return nil
         }
     }
-    
+
     public func decodeHeartbeat(uuid: String, data: Data?) -> BTDevice? {
         guard let data = data else { return nil }
         guard data.count > 16 else { return nil }
@@ -52,7 +52,7 @@ public struct RuuviDecoderiOS: BTDecoder {
             return nil
         }
     }
-    
+
     public func decodeAdvertisement(uuid: String, rssi: NSNumber, advertisementData: [String : Any]) -> BTDevice? {
         if let manufacturerDictionary = advertisementData[CBAdvertisementDataServiceDataKey] as? [NSObject:AnyObject],
             let manufacturerData = manufacturerDictionary.first?.value as? Data {
@@ -84,22 +84,63 @@ public struct RuuviDecoderiOS: BTDecoder {
             guard manufactureId == Ruuvi.vendorId else { return nil }
             let version = manufacturerData[2]
             let isConnectable = (advertisementData[CBAdvertisementDataIsConnectable] as? NSNumber)?.boolValue ?? false
-            switch (version) {
-            case 3:
+            let serviceUUID = extract16ByteServiceUUID(from: advertisementData)
+
+            switch version {
+            case 3:  // Handle version 3
                 guard manufacturerData.count > 14 else { return nil }
                 let ruuvi = manufacturerData.ruuvi3()
                 let tag = RuuviData3(uuid: uuid, rssi: rssi.intValue, isConnectable: isConnectable, version: Int(version), humidity: ruuvi.humidity, temperature: ruuvi.temperature, pressure: ruuvi.pressure, accelerationX: ruuvi.accelerationX, accelerationY: ruuvi.accelerationY, accelerationZ: ruuvi.accelerationZ, voltage: ruuvi.voltage)
                 return .ruuvi(.tag(.v3(tag)))
-            case 5:
+
+            case 5:  // Handle version 5
                 guard manufacturerData.count > 25 else { return nil }
                 let ruuvi = manufacturerData.ruuvi5()
                 let tag = RuuviData5(uuid: uuid, rssi: rssi.intValue, isConnectable: isConnectable, version: Int(version), humidity: ruuvi.humidity, temperature: ruuvi.temperature, pressure: ruuvi.pressure, accelerationX: ruuvi.accelerationX, accelerationY: ruuvi.accelerationY, accelerationZ: ruuvi.accelerationZ, voltage: ruuvi.voltage, movementCounter: ruuvi.movementCounter, measurementSequenceNumber: ruuvi.measurementSequenceNumber, txPower: ruuvi.txPower, mac: ruuvi.mac)
                 return .ruuvi(.tag(.v5(tag)))
+
+            case 197:  // Handle version C5
+                guard manufacturerData.count > 19 else { return nil }
+                let ruuvi = manufacturerData.ruuviC5()
+                let tag = RuuviDataC5(
+                    uuid: uuid,
+                    serviceUUID: serviceUUID,
+                    rssi: rssi.intValue,
+                    isConnectable: isConnectable,
+                    version: Int(version),
+                    humidity: ruuvi.humidity,
+                    temperature: ruuvi.temperature,
+                    pressure: ruuvi.pressure,
+                    voltage: ruuvi.voltage,
+                    movementCounter: ruuvi.movementCounter,
+                    measurementSequenceNumber: ruuvi.measurementSequenceNumber,
+                    txPower: ruuvi.txPower,
+                    mac: ruuvi.mac
+                )
+                return .ruuvi(.tag(.vC5(tag)))
+
             default:
                 return nil
             }
         } else {
             return nil
         }
+    }
+}
+
+// MARK: Privaye
+extension RuuviDecoderiOS {
+    private func extract16ByteServiceUUID(from advertisementData: [String: Any]) -> String? {
+        // Retrieve the service UUIDs from the advertisement data
+        if let serviceUUIDs = advertisementData[CBAdvertisementDataServiceUUIDsKey] as? [CBUUID] {
+            for uuid in serviceUUIDs {
+                // Return the one with 2 byte
+                if uuid.data.count == 2 {
+                    return uuid.uuidString
+                }
+            }
+        }
+        // Return nil if no 2-byte UUID is found
+        return nil
     }
 }

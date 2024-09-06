@@ -60,6 +60,18 @@ public extension BTDevice {
             return unknownDevice.isConnectable
         }
     }
+
+    var serviceUUID: String? {
+        switch self {
+        case .ruuvi(let ruuviDevice):
+            switch ruuviDevice {
+            case .tag(let ruuviTag):
+                return ruuviTag.serviceUUID
+            }
+        default:
+            return nil
+        }
+    }
 }
 
 extension BTDevice: Hashable {
