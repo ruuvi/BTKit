@@ -1,22 +1,22 @@
 import Foundation
 
 public struct BTBackground {
-    
+
     public static let shared = BTBackground()
-    
+
     let scanner: BTBackgroundScanner
         = BTBackgroundScanneriOS(services: [RuuviNUSService(),
                                             DeviceInformationService()],
                                  decoders: [RuuviDecoderiOS()])
-    
+
     public let services: BTServices = BTServices()
-    
+
     public func isConnected(uuid: String) -> Bool {
         return scanner.isConnected(uuid: uuid)
     }
 
     @discardableResult
-    public func readRSSI<T: AnyObject>(for observer: T, uuid: String, options: BTScannerOptionsInfo? = nil, result: @escaping (T, Result<Int,BTError>) -> Void) -> ObservationToken? {
+    public func readRSSI<T: AnyObject>(for observer: T, uuid: String, options: BTScannerOptionsInfo? = nil, result: @escaping (T, Result<Int, BTError>) -> Void) -> ObservationToken? {
         if scanner.isConnected(uuid: uuid) {
             return scanner.readRSSI(observer, uuid: uuid, options: options) { (observer, RSSI, error) in
                 if let error = error {
@@ -32,7 +32,7 @@ public struct BTBackground {
             return nil
         }
     }
-    
+
     @discardableResult
     public func connect<T: AnyObject>(for observer: T, uuid: String, options: BTScannerOptionsInfo? = nil, connected: ((T, BTConnectResult) -> Void)? = nil, heartbeat: ((T, BTDevice) -> Void)? = nil, disconnected: ((T, BTDisconnectResult) -> Void)? = nil) -> ObservationToken? {
         if scanner.isConnected(uuid: uuid) {
@@ -71,9 +71,9 @@ public struct BTBackground {
             }
         }
     }
-    
+
     @discardableResult
-    public func disconnect<T:AnyObject>(for observer: T, uuid: String, options: BTScannerOptionsInfo? = nil, result: ((T, BTDisconnectResult) -> Void)?) -> ObservationToken? {
+    public func disconnect<T: AnyObject>(for observer: T, uuid: String, options: BTScannerOptionsInfo? = nil, result: ((T, BTDisconnectResult) -> Void)?) -> ObservationToken? {
         if !scanner.isConnected(uuid: uuid) {
             let info = BTKitParsedOptionsInfo(options)
             info.callbackQueue.execute {
@@ -102,7 +102,7 @@ public struct BTBackground {
             })
         }
     }
-    
+
     @discardableResult
     public func observe<T: AnyObject>(_ observer: T, uuid: String, options: BTScannerOptionsInfo? = nil, closure: @escaping (T, BTDevice) -> Void) -> ObservationToken {
         return scanner.observe(observer, uuid: uuid, options: options, closure: closure)

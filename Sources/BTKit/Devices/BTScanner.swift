@@ -2,9 +2,9 @@ import CoreBluetooth
 
 public protocol BTScanner {
     init(decoders: [BTDecoder])
-    
+
     var bluetoothState: BTScannerState { get }
-    
+
     @discardableResult
     func scan<T: AnyObject>(_ observer: T, options: BTScannerOptionsInfo?, closure: @escaping (T, BTDevice) -> Void) -> ObservationToken
     @discardableResult
@@ -22,30 +22,30 @@ public extension BTScanner {
     func scan<T: AnyObject>(_ observer: T, closure: @escaping (T, BTDevice) -> Void) -> ObservationToken {
         return scan(observer, options: nil, closure: closure)
     }
-    
+
     @discardableResult
     func state<T: AnyObject>(_ observer: T, closure: @escaping (T, BTScannerState) -> Void) -> ObservationToken {
         return state(observer, options: nil, closure: closure)
     }
-    
+
     @discardableResult
     func lost<T: AnyObject>(_ observer: T, closure: @escaping (T, BTDevice) -> Void) -> ObservationToken {
         return lost(observer, options: nil, closure: closure)
     }
-    
+
     @discardableResult
     func observe<T: AnyObject>(_ observer: T, uuid: String, closure: @escaping (T, BTDevice) -> Void) -> ObservationToken {
         return observe(observer, uuid: uuid, options: nil, closure: closure)
     }
-    
+
     @discardableResult
     func unknown<T: AnyObject>(_ observer: T, closure: @escaping (T, BTUnknownDevice) -> Void) -> ObservationToken {
         return unknown(observer, options: nil, closure: closure)
     }
-    
+
 }
 
-public enum BTScannerState : Int {
+public enum BTScannerState: Int {
     case unknown
     case resetting
     case unsupported
@@ -53,4 +53,3 @@ public enum BTScannerState : Int {
     case poweredOff
     case poweredOn
 }
-

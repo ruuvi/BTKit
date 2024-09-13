@@ -53,8 +53,8 @@ public struct RuuviDecoderiOS: BTDecoder {
         }
     }
 
-    public func decodeAdvertisement(uuid: String, rssi: NSNumber, advertisementData: [String : Any]) -> BTDevice? {
-        if let manufacturerDictionary = advertisementData[CBAdvertisementDataServiceDataKey] as? [NSObject:AnyObject],
+    public func decodeAdvertisement(uuid: String, rssi: NSNumber, advertisementData: [String: Any]) -> BTDevice? {
+        if let manufacturerDictionary = advertisementData[CBAdvertisementDataServiceDataKey] as? [NSObject: AnyObject],
             let manufacturerData = manufacturerDictionary.first?.value as? Data {
             guard manufacturerData.count > 18 else { return nil }
             guard let url = String(data: manufacturerData[3 ... manufacturerData.count - 1], encoding: .utf8) else { return nil}

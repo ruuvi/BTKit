@@ -83,7 +83,7 @@ public extension Data {
         let temperatureBase = self[4] & 0x7F
         let temperatureFraction = Double(self[5]) / 100.0
         var temperature = Double(temperatureBase) + temperatureFraction
-        if (temperatureSign == 1) {
+        if temperatureSign == 1 {
             temperature *= -1
         }
 
@@ -443,14 +443,13 @@ public extension Data {
             measurementSequenceNumber = nil
         }
 
-
         return Ruuvi.Heartbeat1(humidity: humidity, temperature: temperature, pressure: pressure, accelerationX: accelerationX, accelerationY: accelerationY, accelerationZ: accelerationZ, movementCounter: movementCounter, measurementSequenceNumber: measurementSequenceNumber, voltage: voltage, txPower: txPower)
     }
 
     private func addColons(mac: String) -> String {
         let out = NSMutableString(string: mac)
         var i = mac.count - 2
-        while (i > 0) {
+        while i > 0 {
             out.insert(":", at: i)
             i -= 2
         }

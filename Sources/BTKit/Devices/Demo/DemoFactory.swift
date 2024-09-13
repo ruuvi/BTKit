@@ -2,7 +2,7 @@ import Foundation
 
 struct DemoFactory {
     static let shared = DemoFactory()
-    
+
     func build(for uuid: String) -> BTDevice {
         let rssi = -Int(arc4random_uniform(90))
         let humidity = Double(arc4random_uniform(100))
@@ -12,7 +12,7 @@ struct DemoFactory {
         let accelerationY = Double(arc4random_uniform(1000)) / 1000.0
         let accelerationZ = Double(arc4random_uniform(1000)) / 1000.0
         let voltage = 3.125
-        
+
         return .ruuvi(.tag(.v5(RuuviData5(uuid: uuid,
                                           rssi: rssi,
                                           isConnectable: false,

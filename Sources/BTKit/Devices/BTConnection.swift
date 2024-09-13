@@ -1,6 +1,6 @@
-//import Foundation
+// import Foundation
 //
-//public struct BTConnection {
+// public struct BTConnection {
 //    
 //    private let backgroundScanner = BTKit.background.scanner
 //    private let foregroundScanner = BTKit.foreground.scanner
@@ -100,9 +100,9 @@
 //        }
 //    }
 //    
-//}
+// }
 //
-//public extension BTConnection {
+// public extension BTConnection {
 //    @discardableResult
 //    func establish<T: AnyObject>(for observer: T, uuid: String, result: @escaping (T, BTConnectResult) -> Void) -> ObservationToken? {
 //        return establish(for: observer, uuid: uuid, options: nil, result: result)
@@ -122,4 +122,4 @@
 //    public func stop<T:AnyObject>(for observer: T, uuid: String, result: @escaping (T, BTDisconnectResult) -> Void) -> ObservationToken? {
 //        return stop(for: observer, uuid: uuid, options: nil, result: result)
 //    }
-//}
+// }

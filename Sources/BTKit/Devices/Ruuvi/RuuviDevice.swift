@@ -22,7 +22,7 @@ public enum RuuviTag {
     case vC5(RuuviDataC5)
 
     case h1(RuuviHeartbeat1)
-    
+
     case n2(RuuviData2)
     case n3(RuuviData3)
     case n4(RuuviData4)
@@ -31,7 +31,7 @@ public enum RuuviTag {
 }
 
 public extension RuuviTag {
-    
+
     var v2: RuuviData2? {
         if case let .v2(data) = self {
             return data
@@ -39,7 +39,7 @@ public extension RuuviTag {
             return nil
         }
     }
-    
+
     var v3: RuuviData3? {
         if case let .v3(data) = self {
             return data
@@ -47,7 +47,7 @@ public extension RuuviTag {
             return nil
         }
     }
-    
+
     var v4: RuuviData4? {
         if case let .v4(data) = self {
             return data
@@ -55,7 +55,7 @@ public extension RuuviTag {
             return nil
         }
     }
-    
+
     var v5: RuuviData5? {
         if case let .v5(data) = self {
             return data
@@ -98,7 +98,7 @@ public extension RuuviTag {
             return data.voltage
         }
     }
-    
+
     var accelerationX: Double? {
         switch self {
         case .v2:
@@ -125,7 +125,7 @@ public extension RuuviTag {
             return nil
         }
     }
-    
+
     var accelerationY: Double? {
         switch self {
         case .v2:
@@ -152,7 +152,7 @@ public extension RuuviTag {
             return nil
         }
     }
-    
+
     var accelerationZ: Double? {
         switch self {
         case .v2:
@@ -179,7 +179,7 @@ public extension RuuviTag {
             return nil
         }
     }
-    
+
     var movementCounter: Int? {
         switch self {
         case .v2:
@@ -206,7 +206,7 @@ public extension RuuviTag {
             return data.movementCounter
         }
     }
-    
+
     var measurementSequenceNumber: Int? {
         switch self {
         case .v2:
@@ -233,7 +233,7 @@ public extension RuuviTag {
             return data.measurementSequenceNumber
         }
     }
-    
+
     var txPower: Int? {
         switch self {
         case .v2:
@@ -260,7 +260,7 @@ public extension RuuviTag {
             return data.txPower
         }
     }
-    
+
     var uuid: String {
         switch self {
         case .v2(let data):
@@ -287,7 +287,7 @@ public extension RuuviTag {
             return data.uuid
         }
     }
-    
+
     var rssi: Int? {
         switch self {
         case .v2(let data):
@@ -314,7 +314,7 @@ public extension RuuviTag {
             return data.rssi
         }
     }
-    
+
     var isConnectable: Bool {
         switch self {
         case .v2(let data):
@@ -341,7 +341,7 @@ public extension RuuviTag {
             return data.isConnectable
         }
     }
-    
+
     var version: Int {
         switch self {
         case .v2(let data):
@@ -368,7 +368,7 @@ public extension RuuviTag {
             return data.version
         }
     }
-    
+
     var relativeHumidity: Double? {
         switch self {
         case .v2(let data):
@@ -395,7 +395,7 @@ public extension RuuviTag {
             return data.humidity
         }
     }
-    
+
     var hectopascals: Double? {
         switch self {
         case .v2(let data):
@@ -422,7 +422,7 @@ public extension RuuviTag {
             return data.pressure
         }
     }
-    
+
     var inHg: Double? {
         if let pressure = hectopascals {
             return pressure / 33.86389
@@ -430,7 +430,7 @@ public extension RuuviTag {
             return nil
         }
     }
-    
+
     var mmHg: Double? {
         if let pressure = hectopascals {
             return pressure / 1.333223684
@@ -438,7 +438,7 @@ public extension RuuviTag {
             return nil
         }
     }
-    
+
     var celsius: Double? {
         switch self {
         case .v2(let data):
@@ -465,7 +465,7 @@ public extension RuuviTag {
             return data.temperature
         }
     }
-    
+
     var mac: String? {
         switch self {
         case .v5(let data):
@@ -480,7 +480,7 @@ public extension RuuviTag {
             return nil
         }
     }
-    
+
     var fahrenheit: Double? {
         if let celsius = celsius {
             return (celsius * 9.0 / 5.0) + 32.0
@@ -488,7 +488,7 @@ public extension RuuviTag {
             return nil
         }
     }
-    
+
     var kelvin: Double? {
         if let celsius = celsius {
             return celsius + 273.15
@@ -559,13 +559,12 @@ public extension RuuviTag {
     var isConnected: Bool {
         return BTKit.background.scanner.isConnected(uuid: uuid)
     }
-    
-    
+
     @discardableResult
     func connect<T: AnyObject>(for observer: T, connected: @escaping (T, BTConnectResult) -> Void, heartbeat: @escaping (T, BTDevice) -> Void, disconnected: @escaping (T, BTDisconnectResult) -> Void) -> ObservationToken? {
         return connect(for: observer, options: nil, connected: connected, heartbeat: heartbeat, disconnected: disconnected)
     }
-    
+
     @discardableResult
     func connect<T: AnyObject>(for observer: T, options: BTScannerOptionsInfo?, connected: @escaping (T, BTConnectResult) -> Void, heartbeat: @escaping (T, BTDevice) -> Void, disconnected: @escaping (T, BTDisconnectResult) -> Void) -> ObservationToken? {
         if !isConnectable {
@@ -578,12 +577,12 @@ public extension RuuviTag {
             return BTKit.background.connect(for: observer, uuid: uuid, options: options, connected: connected, heartbeat: heartbeat, disconnected: disconnected)
         }
     }
-    
+
     @discardableResult
     func disconnect<T: AnyObject>(for observer: T, result: @escaping (T, BTDisconnectResult) -> Void) -> ObservationToken? {
         return disconnect(for: observer, options: nil, result: result)
     }
-    
+
     @discardableResult
     func disconnect<T: AnyObject>(for observer: T, options: BTScannerOptionsInfo?, result: @escaping (T, BTDisconnectResult) -> Void) -> ObservationToken? {
         if !isConnectable {
@@ -596,11 +595,11 @@ public extension RuuviTag {
             return BTKit.background.disconnect(for: observer, uuid: uuid, options: options, result: result)
         }
     }
-    
+
     func celisus<T: AnyObject>(for observer: T, from date: Date, result: @escaping (T, Result<[RuuviTagEnvLog], BTError>) -> Void) {
         celisus(for: observer, from: date, options: nil, result: result)
     }
-    
+
     func celisus<T: AnyObject>(for observer: T, from date: Date, options: BTScannerOptionsInfo?, result: @escaping (T, Result<[RuuviTagEnvLog], BTError>) -> Void) {
         if !isConnectable {
             let info = BTKitParsedOptionsInfo(options)
@@ -611,11 +610,11 @@ public extension RuuviTag {
             BTKit.background.services.ruuvi.nus.celisus(for: observer, uuid: uuid, from: date, result: result)
         }
     }
-    
+
     func humidity<T: AnyObject>(for observer: T, from date: Date, result: @escaping (T, Result<[RuuviTagEnvLog], BTError>) -> Void) {
         humidity(for: observer, from: date, options: nil, result: result)
     }
-    
+
     func humidity<T: AnyObject>(for observer: T, from date: Date, options: BTScannerOptionsInfo?, result: @escaping (T, Result<[RuuviTagEnvLog], BTError>) -> Void) {
         if !isConnectable {
             let info = BTKitParsedOptionsInfo(options)
@@ -626,11 +625,11 @@ public extension RuuviTag {
             BTKit.background.services.ruuvi.nus.humidity(for: observer, uuid: uuid, from: date, options: options, result: result)
         }
     }
-    
+
     func pressure<T: AnyObject>(for observer: T, from date: Date, result: @escaping (T, Result<[RuuviTagEnvLog], BTError>) -> Void) {
         pressure(for: observer, from: date, options: nil, result: result)
     }
-    
+
     func pressure<T: AnyObject>(for observer: T, from date: Date, options: BTScannerOptionsInfo?, result: @escaping (T, Result<[RuuviTagEnvLog], BTError>) -> Void) {
         if !isConnectable {
             let info = BTKitParsedOptionsInfo(options)
@@ -641,11 +640,11 @@ public extension RuuviTag {
             BTKit.background.services.ruuvi.nus.pressure(for: observer, uuid: uuid, from: date, options: options, result: result)
         }
     }
-    
+
     func log<T: AnyObject>(for observer: T, from date: Date, result: @escaping (T, Result<Progressable, BTError>) -> Void) {
         log(for: observer, from: date, options: nil, result: result)
     }
-    
+
     func log<T: AnyObject>(for observer: T, from date: Date, options: BTScannerOptionsInfo?, result: @escaping (T, Result<Progressable, BTError>) -> Void) {
         if !isConnectable {
             let info = BTKitParsedOptionsInfo(options)

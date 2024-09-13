@@ -8,7 +8,7 @@ public protocol BTData {
 public protocol BTDecoder {
     func decodeNetwork(uuid: String, rssi: Int, isConnectable: Bool, payload: String) -> BTDevice?
     func decodeHeartbeat(uuid: String, data: Data?) -> BTDevice?
-    func decodeAdvertisement(uuid: String, rssi: NSNumber, advertisementData: [String : Any]) -> BTDevice?
+    func decodeAdvertisement(uuid: String, rssi: NSNumber, advertisementData: [String: Any]) -> BTDevice?
 }
 
 public protocol BTVendor {
