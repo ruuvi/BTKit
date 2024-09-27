@@ -99,10 +99,10 @@ public struct RuuviDecoderiOS: BTDecoder {
                 let tag = RuuviData5(uuid: uuid, rssi: rssi.intValue, isConnectable: isConnectable, version: Int(version), humidity: ruuvi.humidity, temperature: ruuvi.temperature, pressure: ruuvi.pressure, accelerationX: ruuvi.accelerationX, accelerationY: ruuvi.accelerationY, accelerationZ: ruuvi.accelerationZ, voltage: ruuvi.voltage, movementCounter: ruuvi.movementCounter, measurementSequenceNumber: ruuvi.measurementSequenceNumber, txPower: ruuvi.txPower, mac: ruuvi.mac)
                 return .ruuvi(.tag(.v5(tag)))
             case 6:
-                print("DEKHI VERSION: ", version, "\n")
-                print("DEKHI 5: ", manufacturerData.ruuvi5(), "\n")
-                print("DEKHI C5: ", manufacturerData.ruuviC5(), "\n")
-                print("DEKHI COUNT: ", manufacturerData.count, "\n")
+//                print("DEKHI VERSION: ", version, "\n")
+//                print("DEKHI 5: ", manufacturerData.ruuvi5(), "\n")
+//                print("DEKHI C5: ", manufacturerData.ruuviC5(), "\n")
+//                print("DEKHI COUNT: ", manufacturerData.count, "\n")
                 return nil
 
             case 197:  // Handle version C5

@@ -50,6 +50,22 @@ public extension Ruuvi {
         public var mac: String
     }
 
+    struct Data6 {
+        public var humidity: Double?
+        public var temperature: Double?
+        public var pressure: Double?
+        public var pm1_0: Double?
+        public var pm2_5: Double?
+        public var pm4_0: Double?
+        public var pm10: Double?
+        public var co2: Double?
+        public var voc: Double?
+        public var nox: Double?
+        public var lumi: Double?
+        public var dbaAvg: Double
+        public var mac: String
+    }
+
     struct Heartbeat1 {
         public var humidity: Double?
         public var temperature: Double?
