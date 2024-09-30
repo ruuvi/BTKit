@@ -471,7 +471,7 @@ public extension Data {
 
         // temperature
         var temperature: Double?
-        if let t = self[3...4].withUnsafeBytes({ $0.bindMemory(to: Int16.self) }).map(Int16.init(bigEndian:)).first {
+        if let t = self[5...6].withUnsafeBytes({ $0.bindMemory(to: Int16.self) }).map(Int16.init(bigEndian:)).first {
             if t == Int16.min {
                 temperature = nil
             } else {
@@ -483,7 +483,7 @@ public extension Data {
 
         // humidity
         var humidity: Double?
-        if let h = self[5...6].withUnsafeBytes({ $0.bindMemory(to: UInt16.self) }).map(UInt16.init(bigEndian:)).first {
+        if let h = self[7...8].withUnsafeBytes({ $0.bindMemory(to: UInt16.self) }).map(UInt16.init(bigEndian:)).first {
             if h == UInt16.max {
                 humidity = nil
             } else {
@@ -495,7 +495,7 @@ public extension Data {
 
         // pressure
         var pressure: Double?
-        if let p = self[7...8].withUnsafeBytes({ $0.bindMemory(to: UInt16.self) }).map(UInt16.init(bigEndian:)).first {
+        if let p = self[9...10].withUnsafeBytes({ $0.bindMemory(to: UInt16.self) }).map(UInt16.init(bigEndian:)).first {
             if p == UInt16.max {
                 pressure = nil
             } else {
@@ -508,7 +508,7 @@ public extension Data {
 
         // **PM1.0 (Bytes 11-12)**
         var pm1_0: Double?
-        if let pm = self[9...10].withUnsafeBytes({ $0.bindMemory(to: Int16.self) }).map(Int16.init(bigEndian:)).first {
+        if let pm = self[11...12].withUnsafeBytes({ $0.bindMemory(to: Int16.self) }).map(Int16.init(bigEndian:)).first {
             if pm == Int16.min {
                 pm1_0 = nil
             } else {
@@ -520,7 +520,7 @@ public extension Data {
 
         // **PM2.5 (Bytes 13-14)**
         var pm2_5: Double?
-        if let pm = self[11...12].withUnsafeBytes({ $0.bindMemory(to: Int16.self) }).map(Int16.init(bigEndian:)).first {
+        if let pm = self[13...14].withUnsafeBytes({ $0.bindMemory(to: Int16.self) }).map(Int16.init(bigEndian:)).first {
             if pm == Int16.min {
                 pm2_5 = nil
             } else {
@@ -532,7 +532,7 @@ public extension Data {
 
         // **PM4.0 (Bytes 15-16)**
         var pm4_0: Double?
-        if let pm = self[13...14].withUnsafeBytes({ $0.bindMemory(to: Int16.self) }).map(Int16.init(bigEndian:)).first {
+        if let pm = self[15...16].withUnsafeBytes({ $0.bindMemory(to: Int16.self) }).map(Int16.init(bigEndian:)).first {
             if pm == Int16.min {
                 pm4_0 = nil
             } else {
@@ -544,7 +544,7 @@ public extension Data {
 
         // **PM10 (Bytes 17-18)**
         var pm10: Double?
-        if let pm = self[15...16].withUnsafeBytes({ $0.bindMemory(to: Int16.self) }).map(Int16.init(bigEndian:)).first {
+        if let pm = self[17...18].withUnsafeBytes({ $0.bindMemory(to: Int16.self) }).map(Int16.init(bigEndian:)).first {
             if pm == Int16.min {
                 pm10 = nil
             } else {
@@ -556,7 +556,7 @@ public extension Data {
 
         // **CO2 (Bytes 19-20)**
         var co2: Double?
-        if let c = self[17...18].withUnsafeBytes({ $0.bindMemory(to: UInt16.self) }).map(UInt16.init(bigEndian:)).first {
+        if let c = self[19...20].withUnsafeBytes({ $0.bindMemory(to: UInt16.self) }).map(UInt16.init(bigEndian:)).first {
             if c == UInt16.max {
                 co2 = nil
             } else {
@@ -568,7 +568,7 @@ public extension Data {
 
         // **VOC (Bytes 21-22)**
         var voc: Double?
-        if let v = self[19...20].withUnsafeBytes({ $0.bindMemory(to: UInt16.self) }).map(UInt16.init(bigEndian:)).first {
+        if let v = self[21...22].withUnsafeBytes({ $0.bindMemory(to: UInt16.self) }).map(UInt16.init(bigEndian:)).first {
             if v == UInt16.max {
                 voc = nil
             } else {
@@ -580,7 +580,7 @@ public extension Data {
 
         // **NOX (Bytes 23-24)**
         var nox: Double?
-        if let n = self[21...22].withUnsafeBytes({ $0.bindMemory(to: UInt16.self) }).map(UInt16.init(bigEndian:)).first {
+        if let n = self[23...24].withUnsafeBytes({ $0.bindMemory(to: UInt16.self) }).map(UInt16.init(bigEndian:)).first {
             if n == UInt16.max {
                 nox = nil
             } else {
@@ -592,7 +592,7 @@ public extension Data {
 
         // **Luminance (Bytes 25-26)**
         var luminane: Double?
-        if let lumi = self[23...24].withUnsafeBytes({ $0.bindMemory(to: UInt16.self) }).map(UInt16.init(bigEndian:)).first {
+        if let lumi = self[25...26].withUnsafeBytes({ $0.bindMemory(to: UInt16.self) }).map(UInt16.init(bigEndian:)).first {
             if lumi == UInt16.max {
                 luminane = nil
             } else {
@@ -604,7 +604,7 @@ public extension Data {
 
         // **dBA Average (Byte 27)**
         var dbaAvg: Double?
-        let dbaAvgByte = self[25]
+        let dbaAvgByte = self[27]
         if dbaAvgByte == UInt8.max {
             dbaAvg = nil
         } else {
@@ -613,7 +613,7 @@ public extension Data {
 
         // **dBA Peak (Byte 28)**
         var dbaPeak: Double?
-        let dbaPeakByte = self[26]
+        let dbaPeakByte = self[28]
         if dbaPeakByte == UInt8.max {
             dbaPeak = nil
         } else {
@@ -624,7 +624,7 @@ public extension Data {
         // **MeasurementSequenceNumber Number (Bytes 29-30)**
         // measurementSequenceNumber
         var measurementSequenceNumber: Int?
-        if let msn = self[27...28].withUnsafeBytes({ $0.bindMemory(to: UInt16.self) }).map(UInt16.init(bigEndian:)).first {
+        if let msn = self[29...30].withUnsafeBytes({ $0.bindMemory(to: UInt16.self) }).map(UInt16.init(bigEndian:)).first {
             if msn == UInt16.max {
                 measurementSequenceNumber = nil
             } else {
@@ -636,7 +636,7 @@ public extension Data {
 
         // **Voltage (Byte 31)**
         var voltage: Double?
-        let voltageByte = self[29]
+        let voltageByte = self[31]
         if voltageByte == UInt8.max {
             voltage = nil
         } else {
