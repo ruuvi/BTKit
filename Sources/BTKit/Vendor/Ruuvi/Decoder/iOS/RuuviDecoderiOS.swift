@@ -122,7 +122,7 @@ public struct RuuviDecoderiOS: BTDecoder {
                     )
                     return .ruuvi(.tag(.v6(tag)))
                 } else if manufacturerData.count > 31 { // Advertising extension
-                    let ruuvi = manufacturerData.ruuvi6Legacy()
+                    let ruuvi = manufacturerData.ruuvi6AdvertisingExtension()
                     let tag = RuuviData6(
                         uuid: uuid,
                         serviceUUID: serviceUUID,
@@ -139,6 +139,8 @@ public struct RuuviDecoderiOS: BTDecoder {
                         co2: ruuvi.co2,
                         nox: ruuvi.nox,
                         dbaAvg: ruuvi.dbaAvg,
+                        dbaPeak: ruuvi.dbaPeak,
+                        voltage: ruuvi.voltage,
                         mac: ruuvi.mac
                     )
                     return .ruuvi(.tag(.v6(tag)))
