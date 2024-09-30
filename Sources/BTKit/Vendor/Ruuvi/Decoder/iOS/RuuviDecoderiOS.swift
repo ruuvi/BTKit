@@ -122,10 +122,10 @@ public struct RuuviDecoderiOS: BTDecoder {
                     )
                     return .ruuvi(.tag(.v6(tag)))
                 }
-//                print("DEKHI VERSION: ", version, "\n")
+                print("DEKHI VERSION: ", version, "\n")
 //                print("DEKHI 5: ", manufacturerData.ruuvi5(), "\n")
 //                print("DEKHI C5: ", manufacturerData.ruuviC5(), "\n")
-//                print("DEKHI COUNT: ", manufacturerData.count, "\n")
+                print("DEKHI COUNT: ", manufacturerData.count, "\n")
                 return nil
 
             case 197:  // Handle version C5
