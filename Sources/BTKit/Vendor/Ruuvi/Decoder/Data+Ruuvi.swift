@@ -469,119 +469,142 @@ public extension Data {
 
     func ruuvi6AdvertisingExtension() -> Ruuvi.Data6 {
 
-        // **Temperature (Bytes 5-6)**
+        // temperature
         var temperature: Double?
-        let tempBytes = self[5...6]
-        let tempRaw = UInt16(bigEndian: tempBytes.withUnsafeBytes { $0.load(as: UInt16.self) })
-        if tempRaw == UInt16.max {
+        if let t = self[3...4].withUnsafeBytes({ $0.bindMemory(to: Int16.self) }).map(Int16.init(bigEndian:)).first {
+            if t == Int16.min {
+                temperature = nil
+            } else {
+                temperature = Double(t) / 200.0
+            }
+        } else {
             temperature = nil
-        } else {
-            temperature = Double(tempRaw) * 0.005
         }
 
-        // **Humidity (Bytes 7-8)**
+        // humidity
         var humidity: Double?
-        let humBytes = self[7...8]
-        let humRaw = UInt16(bigEndian: humBytes.withUnsafeBytes { $0.load(as: UInt16.self) })
-        if humRaw == UInt16.max {
-            humidity = nil
+        if let h = self[5...6].withUnsafeBytes({ $0.bindMemory(to: UInt16.self) }).map(UInt16.init(bigEndian:)).first {
+            if h == UInt16.max {
+                humidity = nil
+            } else {
+                humidity = Double(h) / 400.0
+            }
         } else {
-            humidity = Double(humRaw) * 0.0025
+            humidity = nil
         }
 
-        // **Pressure (Bytes 9-10)**
+        // pressure
         var pressure: Double?
-        let presBytes = self[9...10]
-        let presRaw = UInt16(bigEndian: presBytes.withUnsafeBytes { $0.load(as: UInt16.self) })
-        if presRaw == UInt16.max {
-            pressure = nil
+        if let p = self[7...8].withUnsafeBytes({ $0.bindMemory(to: UInt16.self) }).map(UInt16.init(bigEndian:)).first {
+            if p == UInt16.max {
+                pressure = nil
+            } else {
+                pressure = (Double(p) + 50000.0) / 100.0
+            }
         } else {
-            pressure = Double(presRaw) + 50000.0
+            pressure = nil
         }
+
 
         // **PM1.0 (Bytes 11-12)**
         var pm1_0: Double?
-        let pm1Bytes = self[11...12]
-        let pm1Raw = UInt16(bigEndian: pm1Bytes.withUnsafeBytes { $0.load(as: UInt16.self) })
-        if pm1Raw == UInt16.max {
-            pm1_0 = nil
+        if let pm = self[9...10].withUnsafeBytes({ $0.bindMemory(to: Int16.self) }).map(Int16.init(bigEndian:)).first {
+            if pm == Int16.min {
+                pm1_0 = nil
+            } else {
+                pm1_0 = Double(pm) * 0.1
+            }
         } else {
-            pm1_0 = Double(pm1Raw) * 0.1
+            pm1_0 = nil
         }
 
         // **PM2.5 (Bytes 13-14)**
         var pm2_5: Double?
-        let pm2_5Bytes = self[13...14]
-        let pm2_5Raw = UInt16(bigEndian: pm2_5Bytes.withUnsafeBytes { $0.load(as: UInt16.self) })
-        if pm2_5Raw == UInt16.max {
-            pm2_5 = nil
+        if let pm = self[11...12].withUnsafeBytes({ $0.bindMemory(to: Int16.self) }).map(Int16.init(bigEndian:)).first {
+            if pm == Int16.min {
+                pm2_5 = nil
+            } else {
+                pm2_5 = Double(pm) * 0.1
+            }
         } else {
-            pm2_5 = Double(pm2_5Raw) * 0.1
+            pm2_5 = nil
         }
 
         // **PM4.0 (Bytes 15-16)**
         var pm4_0: Double?
-        let pm4Bytes = self[15...16]
-        let pm4Raw = UInt16(bigEndian: pm4Bytes.withUnsafeBytes { $0.load(as: UInt16.self) })
-        if pm4Raw == UInt16.max {
-            pm4_0 = nil
+        if let pm = self[13...14].withUnsafeBytes({ $0.bindMemory(to: Int16.self) }).map(Int16.init(bigEndian:)).first {
+            if pm == Int16.min {
+                pm4_0 = nil
+            } else {
+                pm4_0 = Double(pm) * 0.1
+            }
         } else {
-            pm4_0 = Double(pm4Raw) * 0.1
+            pm4_0 = nil
         }
 
         // **PM10 (Bytes 17-18)**
         var pm10: Double?
-        let pm10Bytes = self[17...18]
-        let pm10Raw = UInt16(bigEndian: pm10Bytes.withUnsafeBytes { $0.load(as: UInt16.self) })
-        if pm10Raw == UInt16.max {
-            pm10 = nil
+        if let pm = self[15...16].withUnsafeBytes({ $0.bindMemory(to: Int16.self) }).map(Int16.init(bigEndian:)).first {
+            if pm == Int16.min {
+                pm10 = nil
+            } else {
+                pm10 = Double(pm) * 0.1
+            }
         } else {
-            pm10 = Double(pm10Raw) * 0.1
+            pm10 = nil
         }
 
         // **CO2 (Bytes 19-20)**
         var co2: Double?
-        let co2Bytes = self[19...20]
-        let co2Raw = UInt16(bigEndian: co2Bytes.withUnsafeBytes { $0.load(as: UInt16.self) })
-        if co2Raw == UInt16.max {
-            co2 = nil
+        if let c = self[17...18].withUnsafeBytes({ $0.bindMemory(to: UInt16.self) }).map(UInt16.init(bigEndian:)).first {
+            if c == UInt16.max {
+                co2 = nil
+            } else {
+                co2 = Double(c)
+            }
         } else {
-            co2 = Double(co2Raw)
+            co2 = nil
         }
 
         // **VOC (Bytes 21-22)**
         var voc: Double?
-        let vocBytes = self[21...22]
-        let vocRaw = UInt16(bigEndian: vocBytes.withUnsafeBytes { $0.load(as: UInt16.self) })
-        if vocRaw == UInt16.max {
-            voc = nil
+        if let v = self[19...20].withUnsafeBytes({ $0.bindMemory(to: UInt16.self) }).map(UInt16.init(bigEndian:)).first {
+            if v == UInt16.max {
+                voc = nil
+            } else {
+                voc = Double(v)
+            }
         } else {
-            voc = Double(vocRaw)
+            voc = nil
         }
 
         // **NOX (Bytes 23-24)**
         var nox: Double?
-        let noxBytes = self[23...24]
-        let noxRaw = UInt16(bigEndian: noxBytes.withUnsafeBytes { $0.load(as: UInt16.self) })
-        if noxRaw == UInt16.max {
-            nox = nil
+        if let n = self[21...22].withUnsafeBytes({ $0.bindMemory(to: UInt16.self) }).map(UInt16.init(bigEndian:)).first {
+            if n == UInt16.max {
+                nox = nil
+            } else {
+                nox = Double(n)
+            }
         } else {
-            nox = Double(noxRaw)
+            nox = nil
         }
 
         // **Luminance (Bytes 25-26)**
-        var lumi: Double?
-        let lumiBytes = self[25...26]
-        let lumiRaw = UInt16(bigEndian: lumiBytes.withUnsafeBytes { $0.load(as: UInt16.self) })
-        if lumiRaw == UInt16.max {
-            lumi = nil
+        var luminane: Double?
+        if let lumi = self[23...24].withUnsafeBytes({ $0.bindMemory(to: UInt16.self) }).map(UInt16.init(bigEndian:)).first {
+            if lumi == UInt16.max {
+                luminane = nil
+            } else {
+                luminane = Double(lumi)
+            }
         } else {
-            lumi = Double(lumiRaw)
+            luminane = nil
         }
 
         // **dBA Average (Byte 27)**
         var dbaAvg: Double?
-        let dbaAvgByte = self[27]
+        let dbaAvgByte = self[25]
         if dbaAvgByte == UInt8.max {
             dbaAvg = nil
         } else {
@@ -590,7 +613,7 @@ public extension Data {
 
         // **dBA Peak (Byte 28)**
         var dbaPeak: Double?
-        let dbaPeakByte = self[28]
+        let dbaPeakByte = self[26]
         if dbaPeakByte == UInt8.max {
             dbaPeak = nil
         } else {
@@ -601,7 +624,7 @@ public extension Data {
         // **MeasurementSequenceNumber Number (Bytes 29-30)**
         // measurementSequenceNumber
         var measurementSequenceNumber: Int?
-        if let msn = self[29...30].withUnsafeBytes({ $0.bindMemory(to: UInt16.self) }).map(UInt16.init(bigEndian:)).first {
+        if let msn = self[27...28].withUnsafeBytes({ $0.bindMemory(to: UInt16.self) }).map(UInt16.init(bigEndian:)).first {
             if msn == UInt16.max {
                 measurementSequenceNumber = nil
             } else {
@@ -613,7 +636,7 @@ public extension Data {
 
         // **Voltage (Byte 31)**
         var voltage: Double?
-        let voltageByte = self[31]
+        let voltageByte = self[29]
         if voltageByte == UInt8.max {
             voltage = nil
         } else {
@@ -635,7 +658,7 @@ public extension Data {
             co2: co2,
             voc: voc,
             nox: nox,
-            lumi: lumi,
+            lumi: luminane,
             dbaAvg: dbaAvg,
             dbaPeak: dbaPeak,
             measurementSequenceNumber: measurementSequenceNumber,
