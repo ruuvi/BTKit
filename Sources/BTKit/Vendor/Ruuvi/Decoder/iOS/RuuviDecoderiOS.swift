@@ -121,6 +121,27 @@ public struct RuuviDecoderiOS: BTDecoder {
                         mac: ruuvi.mac
                     )
                     return .ruuvi(.tag(.v6(tag)))
+                } else if manufacturerData.count > 31 { // Advertising extension
+                    let ruuvi = manufacturerData.ruuvi6Legacy()
+                    let tag = RuuviData6(
+                        uuid: uuid,
+                        serviceUUID: serviceUUID,
+                        rssi: rssi.intValue,
+                        isConnectable: isConnectable,
+                        version: Int(version),
+                        humidity: ruuvi.humidity,
+                        temperature: ruuvi.temperature,
+                        pressure: ruuvi.pressure,
+                        pm1_0: ruuvi.pm1_0,
+                        pm2_5: ruuvi.pm2_5,
+                        pm4_0: ruuvi.pm4_0,
+                        pm10: ruuvi.pm10,
+                        co2: ruuvi.co2,
+                        nox: ruuvi.nox,
+                        dbaAvg: ruuvi.dbaAvg,
+                        mac: ruuvi.mac
+                    )
+                    return .ruuvi(.tag(.v6(tag)))
                 }
                 print("DEKHI VERSION: ", version, "\n")
 //                print("DEKHI 5: ", manufacturerData.ruuvi5(), "\n")
