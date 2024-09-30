@@ -99,6 +99,29 @@ public struct RuuviDecoderiOS: BTDecoder {
                 let tag = RuuviData5(uuid: uuid, rssi: rssi.intValue, isConnectable: isConnectable, version: Int(version), humidity: ruuvi.humidity, temperature: ruuvi.temperature, pressure: ruuvi.pressure, accelerationX: ruuvi.accelerationX, accelerationY: ruuvi.accelerationY, accelerationZ: ruuvi.accelerationZ, voltage: ruuvi.voltage, movementCounter: ruuvi.movementCounter, measurementSequenceNumber: ruuvi.measurementSequenceNumber, txPower: ruuvi.txPower, mac: ruuvi.mac)
                 return .ruuvi(.tag(.v5(tag)))
             case 6:
+                // Legacy
+                if manufacturerData.count > 19 && manufacturerData.count <= 31 {
+                    let ruuvi = manufacturerData.ruuvi6Legacy()
+                    let tag = RuuviData6(
+                        uuid: uuid,
+                        serviceUUID: serviceUUID,
+                        rssi: rssi.intValue,
+                        isConnectable: isConnectable,
+                        version: Int(version),
+                        humidity: ruuvi.humidity,
+                        temperature: ruuvi.temperature,
+                        pressure: ruuvi.pressure,
+                        pm1_0: ruuvi.pm1_0,
+                        pm2_5: ruuvi.pm2_5,
+                        pm4_0: ruuvi.pm4_0,
+                        pm10: ruuvi.pm10,
+                        co2: ruuvi.co2,
+                        nox: ruuvi.nox,
+                        dbaAvg: ruuvi.dbaAvg,
+                        mac: ruuvi.mac
+                    )
+                    return .ruuvi(.tag(.v6(tag)))
+                }
 //                print("DEKHI VERSION: ", version, "\n")
 //                print("DEKHI 5: ", manufacturerData.ruuvi5(), "\n")
 //                print("DEKHI C5: ", manufacturerData.ruuviC5(), "\n")

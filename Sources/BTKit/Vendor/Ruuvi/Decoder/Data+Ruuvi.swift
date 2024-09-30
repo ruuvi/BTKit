@@ -62,7 +62,10 @@ public extension Ruuvi {
         public var voc: Double?
         public var nox: Double?
         public var lumi: Double?
-        public var dbaAvg: Double
+        public var dbaAvg: Double?
+        public var dbaPeak: Double?
+        public var sequence: Double?
+        public var voltage: Double?
         public var mac: String
     }
 
@@ -344,6 +347,221 @@ public extension Data {
         )
     }
 
+    func ruuvi6Legacy() -> Ruuvi.Data6 {
+
+        // temperature
+        var temperature: Double?
+        let temperatureByte = self[3]
+        if temperatureByte == Int16.min {
+            temperature = nil
+        } else {
+            temperature = Double(temperatureByte) / 200.0
+        }
+
+        // humidity
+        var humidity: Double?
+        let humidityByte = self[4]
+        if humidityByte == UInt16.max {
+            humidity = nil
+        } else {
+            humidity = Double(humidityByte) / 400.0
+        }
+
+        // pressure
+        var pressure: Double?
+        let pressureByte = self[5]
+        if pressureByte == UInt16.max {
+            pressure = nil
+        } else {
+            pressure = (Double(pressureByte) + 50000.0) / 100.0
+        }
+
+        // PM1.0
+        var pm1_0: Double?
+        let pm1Byte = self[15]
+        if pm1Byte == UInt8.max {
+            pm1_0 = nil
+        } else {
+            pm1_0 = convertLogarithmic(byteValue: pm1Byte, maxSensorValue: 10000.0)
+        }
+
+        // PM2.5
+        var pm2_5: Double?
+        let pm2_5Byte = self[16]
+        if pm2_5Byte == UInt8.max {
+            pm2_5 = nil
+        } else {
+            pm2_5 = convertLogarithmic(byteValue: pm2_5Byte, maxSensorValue: 10000.0)
+        }
+
+        // PM4.0
+        var pm4_0: Double?
+        let pm4Byte = self[17]
+        if pm4Byte == UInt8.max {
+            pm4_0 = nil
+        } else {
+            pm4_0 = convertLogarithmic(byteValue: pm4Byte, maxSensorValue: 10000.0)
+        }
+
+        // PM10
+        var pm10: Double?
+        let pm10Byte = self[18]
+        if pm10Byte == UInt8.max {
+            pm10 = nil
+        } else {
+            pm10 = convertLogarithmic(byteValue: pm10Byte, maxSensorValue: 10000.0)
+        }
+
+        // CO2
+        var co2: Double?
+        let co2Byte = self[18]
+        if co2Byte == UInt8.max {
+            co2 = nil
+        } else {
+            co2 = convertLogarithmic(byteValue: co2Byte, maxSensorValue: 10000.0)
+        }
+
+        // VOC
+        var voc: Double?
+        let vocByte = self[20]
+        if vocByte == UInt8.max {
+            voc = nil
+        } else {
+            voc = Double(vocByte) * 2.0
+        }
+
+        // NOX
+        var nox: Double?
+        let noxByte = self[21]
+        if noxByte == UInt8.max {
+            nox = nil
+        } else {
+            nox = Double(noxByte) * 2.0
+        }
+
+        // dBa Avg
+        var dbaAvg: Double?
+        let dbaByte = self[23]
+        if dbaByte == UInt8.max {
+            dbaAvg = nil
+        } else {
+            dbaAvg = Double(dbaByte) * 0.5
+        }
+
+        let asStr = self.hexEncodedString()
+        let start = asStr.index(asStr.endIndex, offsetBy: -12)
+        let mac = addColons(mac: String(asStr[start...]))
+        return Ruuvi.Data6(
+            humidity: humidity,
+            temperature: temperature,
+            pressure: pressure,
+            pm1_0: pm1_0,
+            pm2_5: pm2_5,
+            pm4_0: pm4_0,
+            pm10: pm10,
+            co2: co2,
+            voc: voc,
+            nox: nox,
+            dbaAvg: dbaAvg,
+            mac: mac
+        )
+    }
+
+//    func ruuvi6AdvertisingExtension() -> Ruuvi.Data6 {
+//
+//        // temperature
+//        var temperature: Double?
+//        if let t = self[3...4].withUnsafeBytes({ $0.bindMemory(to: Int16.self) }).map(Int16.init(bigEndian:)).first {
+//            if t == Int16.min {
+//                temperature = nil
+//            } else {
+//                temperature = Double(t) / 200.0
+//            }
+//        } else {
+//            temperature = nil
+//        }
+//
+//        // humidity
+//        var humidity: Double?
+//        if let h = self[5...6].withUnsafeBytes({ $0.bindMemory(to: UInt16.self) }).map(UInt16.init(bigEndian:)).first {
+//            if h == UInt16.max {
+//                humidity = nil
+//            } else {
+//                humidity = Double(h) / 400.0
+//            }
+//        } else {
+//            humidity = nil
+//        }
+//
+//        // pressure
+//        var pressure: Double?
+//        if let p = self[7...8].withUnsafeBytes({ $0.bindMemory(to: UInt16.self) }).map(UInt16.init(bigEndian:)).first {
+//            if p == UInt16.max {
+//                pressure = nil
+//            } else {
+//                pressure = (Double(p) + 50000.0) / 100.0
+//            }
+//        } else {
+//            pressure = nil
+//        }
+//
+//        // powerInfo
+//        var voltage: Double?
+//        var txPower: Int?
+//        if let powerInfo = self[9...10].withUnsafeBytes({ $0.bindMemory(to: UInt16.self) }).map(UInt16.init(bigEndian:)).first {
+//            let v = powerInfo >> 5
+//            if v == 0b11111111111 {
+//                voltage = nil
+//            } else {
+//                voltage = Double(v) / 1000.0 + 1.6
+//            }
+//            let tx = powerInfo & 0b11111
+//            if tx == 0b11111 {
+//                txPower = nil
+//            } else {
+//                txPower = Int(tx) * 2 - 40
+//            }
+//        } else {
+//            voltage = nil
+//            txPower = nil
+//        }
+//
+//        // movementCounter
+//        var movementCounter: Int?
+//        let mc = self[11]
+//        if mc == UInt8.max {
+//            movementCounter = nil
+//        } else {
+//            movementCounter = Int(mc)
+//        }
+//
+//        // measurementSequenceNumber
+//        var measurementSequenceNumber: Int?
+//        if let msn = self[12...13].withUnsafeBytes({ $0.bindMemory(to: UInt16.self) }).map(UInt16.init(bigEndian:)).first {
+//            if msn == UInt16.max {
+//                measurementSequenceNumber = nil
+//            } else {
+//                measurementSequenceNumber = Int(msn)
+//            }
+//        } else {
+//            measurementSequenceNumber = nil
+//        }
+//
+//        let asStr = self.hexEncodedString()
+//        let start = asStr.index(asStr.endIndex, offsetBy: -12)
+//        let mac = addColons(mac: String(asStr[start...]))
+//        return Ruuvi.Data6(
+//            humidity: humidity,
+//            temperature: temperature,
+//            pressure: pressure,
+//            movementCounter: movementCounter,
+//            measurementSequenceNumber: measurementSequenceNumber,
+//            voltage: voltage,
+//            txPower: txPower,
+//            mac: mac
+//        )
+//    }
+
     func ruuviHeartbeat1() -> Ruuvi.Heartbeat1 {
         // temperature
         var temperature: Double?
@@ -470,5 +688,13 @@ public extension Data {
             i -= 2
         }
         return out.uppercased as String
+    }
+
+    func convertLogarithmic(byteValue: UInt8, maxSensorValue: Double) -> Double {
+        // Normalize the byte value to a range between 0 and 1
+        let normalizedValue = Double(byteValue) / 255.0
+        // Apply the logarithmic scaling
+        let value = pow(10, normalizedValue * log10(maxSensorValue))
+        return value
     }
 }
