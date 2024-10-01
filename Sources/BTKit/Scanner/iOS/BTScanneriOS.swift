@@ -130,6 +130,12 @@ class BTScanneriOS: NSObject, BTScanner {
         if shouldObserveLostDevices && lostTimer == nil {
             startLostDevicesTimer()
         }
+
+        if #available(iOS 13.0, *) {
+            print("BALCHAL-123: ", CBCentralManager.supports(.extendedScanAndConnect))
+        } else {
+            // Fallback on earlier versions
+        }
     }
 
     private func stopIfNeeded() {
