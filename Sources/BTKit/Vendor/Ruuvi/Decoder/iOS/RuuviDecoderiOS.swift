@@ -85,8 +85,7 @@ public struct RuuviDecoderiOS: BTDecoder {
             let version = manufacturerData[2]
             let isConnectable = (advertisementData[CBAdvertisementDataIsConnectable] as? NSNumber)?.boolValue ?? false
             let serviceUUID = extract16ByteServiceUUID(from: advertisementData)
-
-            print("DEKHI VERSION: ", version, "\n")
+            print("DEKHI VERSION: ",  version, " COUNT: ", manufacturerData.count)
             switch version {
             case 3:  // Handle version 3
                 guard manufacturerData.count > 14 else { return nil }
@@ -101,10 +100,8 @@ public struct RuuviDecoderiOS: BTDecoder {
                 return .ruuvi(.tag(.v5(tag)))
             case 254:
                 // Legacy
-                print("DEKHI VERSION: ", version, "\n")
 //                print("DEKHI 5: ", manufacturerData.ruuvi5(), "\n")
 //                print("DEKHI C5: ", manufacturerData.ruuviC5(), "\n")
-                print("DEKHI COUNT: ", manufacturerData.count, "\n")
                 if manufacturerData.count > 19 && manufacturerData.count <= 31 {
                     let ruuvi = manufacturerData.ruuvi6Legacy()
                     let tag = RuuviData6(
