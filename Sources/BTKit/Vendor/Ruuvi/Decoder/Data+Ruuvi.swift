@@ -378,7 +378,7 @@ public extension Data {
 
         // PM1.0
         var pm1_0: Double?
-        let pm1Byte = self[15]
+        let pm1Byte = self[6]
         if pm1Byte == UInt8.max {
             pm1_0 = nil
         } else {
@@ -387,7 +387,7 @@ public extension Data {
 
         // PM2.5
         var pm2_5: Double?
-        let pm2_5Byte = self[16]
+        let pm2_5Byte = self[7]
         if pm2_5Byte == UInt8.max {
             pm2_5 = nil
         } else {
@@ -396,7 +396,7 @@ public extension Data {
 
         // PM4.0
         var pm4_0: Double?
-        let pm4Byte = self[17]
+        let pm4Byte = self[8]
         if pm4Byte == UInt8.max {
             pm4_0 = nil
         } else {
@@ -405,7 +405,7 @@ public extension Data {
 
         // PM10
         var pm10: Double?
-        let pm10Byte = self[18]
+        let pm10Byte = self[9]
         if pm10Byte == UInt8.max {
             pm10 = nil
         } else {
@@ -414,7 +414,7 @@ public extension Data {
 
         // CO2
         var co2: Double?
-        let co2Byte = self[18]
+        let co2Byte = self[10]
         if co2Byte == UInt8.max {
             co2 = nil
         } else {
@@ -423,7 +423,7 @@ public extension Data {
 
         // VOC
         var voc: Double?
-        let vocByte = self[20]
+        let vocByte = self[11]
         if vocByte == UInt8.max {
             voc = nil
         } else {
@@ -432,16 +432,25 @@ public extension Data {
 
         // NOX
         var nox: Double?
-        let noxByte = self[21]
+        let noxByte = self[12]
         if noxByte == UInt8.max {
             nox = nil
         } else {
             nox = Double(noxByte) * 2.0
         }
 
+        // **Luminance (Bytes 25-26)**
+        var luminane: Double?
+        let lumi = self[13]
+        if lumi == UInt16.max {
+            luminane = nil
+        } else {
+            luminane = Double(lumi)
+        }
+
         // dBa Avg
         var dbaAvg: Double?
-        let dbaByte = self[23]
+        let dbaByte = self[14]
         if dbaByte == UInt8.max {
             dbaAvg = nil
         } else {
@@ -462,6 +471,7 @@ public extension Data {
             co2: co2,
             voc: voc,
             nox: nox,
+            lumi: luminane,
             dbaAvg: dbaAvg,
             mac: mac
         )
