@@ -86,6 +86,7 @@ public struct RuuviDecoderiOS: BTDecoder {
             let isConnectable = (advertisementData[CBAdvertisementDataIsConnectable] as? NSNumber)?.boolValue ?? false
             let serviceUUID = extract16ByteServiceUUID(from: advertisementData)
 
+            print("DEKHI VERSION: ", version, "\n")
             switch version {
             case 3:  // Handle version 3
                 guard manufacturerData.count > 14 else { return nil }
