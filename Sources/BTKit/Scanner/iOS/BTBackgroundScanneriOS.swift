@@ -800,13 +800,13 @@ extension BTBackgroundScanneriOS {
         let id = UUID()
 
         queue.async { [weak self] in
-            // Create a RuuviBTService with the provided service UUID
-            let service = RuuviBTService(uuid: CBUUID(string: uuid))
-
-            // Check if the service is already added to avoid duplicates
-            if !(self?.services.contains(where: { $0.uuid == service.uuid }) ?? false) {
-                self?.services.append(service)
-            }
+//            // Create a RuuviBTService with the provided service UUID
+//            let service = RuuviBTService(uuid: CBUUID(string: uuid))
+//
+//            // Check if the service is already added to avoid duplicates
+//            if !(self?.services.contains(where: { $0.uuid == service.uuid }) ?? false) {
+//                self?.services.append(service)
+//            }
             self?.observations.observe[id] = ObserveObservation(block: { [weak self, weak observer] device in
                 guard let observer = observer else {
                     self?.observations.observe.removeValue(forKey: id)
