@@ -895,19 +895,19 @@ extension BTBackgroundScanneriOS: CBCentralManagerDelegate {
     func centralManager(_ central: CBCentralManager, didDiscover peripheral: CBPeripheral, advertisementData: [String: Any], rssi RSSI: NSNumber) {
         guard RSSI.intValue != 127 else { return }
 
-        // Process observations for advertisement data
-        observations.observe.values.forEach { observe in
-            for decoder in decoders {
-                if let device = decoder.decodeAdvertisement(
-                    uuid: peripheral.identifier.uuidString,
-                    rssi: RSSI,
-                    advertisementData: advertisementData
-                ) {
-                    observe.block(device)
-                    break
-                }
-            }
-        }
+//        // Process observations for advertisement data
+//        observations.observe.values.forEach { observe in
+//            for decoder in decoders {
+//                if let device = decoder.decodeAdvertisement(
+//                    uuid: peripheral.identifier.uuidString,
+//                    rssi: RSSI,
+//                    advertisementData: advertisementData
+//                ) {
+//                    observe.block(device)
+//                    break
+//                }
+//            }
+//        }
 
         observations.connect.values
             .filter({ $0.uuid == peripheral.identifier.uuidString })
