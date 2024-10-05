@@ -12,6 +12,7 @@ public struct RuuviDecoderiOS: BTDecoder {
         let version = Int(data[versionOffset])
         let parsableOffset = 5
         let parsable = Data(data[parsableOffset...data.count - 1])
+        print("OMA: ", version)
         switch version {
         case 2:
             guard parsable.count > 5 else { return nil }
@@ -34,9 +35,9 @@ public struct RuuviDecoderiOS: BTDecoder {
             let tag = RuuviData5(uuid: uuid, rssi: rssi, isConnectable: isConnectable, version: Int(version), humidity: ruuvi.humidity, temperature: ruuvi.temperature, pressure: ruuvi.pressure, accelerationX: ruuvi.accelerationX, accelerationY: ruuvi.accelerationY, accelerationZ: ruuvi.accelerationZ, voltage: ruuvi.voltage, movementCounter: ruuvi.movementCounter, measurementSequenceNumber: ruuvi.measurementSequenceNumber, txPower: ruuvi.txPower, mac: ruuvi.mac)
             return .ruuvi(.tag(.n5(tag)))
         case 197:
-            guard parsable.count > 19 else { return nil }
             print("DEKHI: ")
             dump(data)
+            guard parsable.count > 19 else { return nil }
 //            let serviceUUID = extract16ByteServiceUUID(from: parsable)
             let ruuvi = parsable.ruuviC5()
             let tag = RuuviDataC5(
