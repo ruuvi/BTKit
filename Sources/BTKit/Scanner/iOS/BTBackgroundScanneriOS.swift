@@ -1057,6 +1057,7 @@ extension BTBackgroundScanneriOS: CBPeripheralDelegate {
 
     func peripheral(_ peripheral: CBPeripheral, didUpdateValueFor characteristic: CBCharacteristic, error: Error?) {
 
+        print("EKHANE??: ", characteristic.value)
         var heartbeatDevice: BTDevice?
         for decoder in decoders {
             if let device = decoder.decodeHeartbeat(uuid: peripheral.identifier.uuidString, data: characteristic.value) {
