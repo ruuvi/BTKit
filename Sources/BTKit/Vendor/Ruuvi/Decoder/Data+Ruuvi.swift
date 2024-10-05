@@ -876,7 +876,7 @@ public extension Data {
 
         // movementCounter
         var movementCounter: Int?
-        let mc = self[11]
+        let mc = self[9]
         if mc == UInt8.max {
             movementCounter = nil
         } else {
@@ -885,7 +885,7 @@ public extension Data {
 
         // measurementSequenceNumber
         var measurementSequenceNumber: Int?
-        if let msn = self[9...10].withUnsafeBytes({ $0.bindMemory(to: UInt16.self) }).map(UInt16.init(bigEndian:)).first {
+        if let msn = self[10...11].withUnsafeBytes({ $0.bindMemory(to: UInt16.self) }).map(UInt16.init(bigEndian:)).first {
             if msn == UInt16.max {
                 measurementSequenceNumber = nil
             } else {
