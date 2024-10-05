@@ -217,7 +217,7 @@ class BTBackgroundScanneriOS: NSObject, BTBackgroundScanner {
 
     private func startIfNeeded() {
         if shouldBeRunning() && !manager.isScanning && isReady {
-            manager.scanForPeripherals(withServices: services.map({ $0.uuid }), options: [CBCentralManagerScanOptionAllowDuplicatesKey: true])
+            manager.scanForPeripherals(withServices: services.map({ $0.uuid }), options: [CBCentralManagerOptionRestoreIdentifierKey: restoreId])
         }
     }
 
