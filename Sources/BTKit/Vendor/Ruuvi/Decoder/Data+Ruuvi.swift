@@ -819,7 +819,7 @@ public extension Data {
     func ruuviHeartbeatC5() -> Ruuvi.HeartbeatC5 {
         // temperature
         var temperature: Double?
-        if let t = self[3...4].withUnsafeBytes({ $0.bindMemory(to: Int16.self) }).map(Int16.init(bigEndian:)).first {
+        if let t = self[1...2].withUnsafeBytes({ $0.bindMemory(to: Int16.self) }).map(Int16.init(bigEndian:)).first {
             if t == Int16.min {
                 temperature = nil
             } else {
@@ -831,7 +831,7 @@ public extension Data {
 
         // humidity
         var humidity: Double?
-        if let h = self[5...6].withUnsafeBytes({ $0.bindMemory(to: UInt16.self) }).map(UInt16.init(bigEndian:)).first {
+        if let h = self[3...4].withUnsafeBytes({ $0.bindMemory(to: UInt16.self) }).map(UInt16.init(bigEndian:)).first {
             if h == UInt16.max {
                 humidity = nil
             } else {
@@ -843,7 +843,7 @@ public extension Data {
 
         // pressure
         var pressure: Double?
-        if let p = self[7...8].withUnsafeBytes({ $0.bindMemory(to: UInt16.self) }).map(UInt16.init(bigEndian:)).first {
+        if let p = self[5...6].withUnsafeBytes({ $0.bindMemory(to: UInt16.self) }).map(UInt16.init(bigEndian:)).first {
             if p == UInt16.max {
                 pressure = nil
             } else {
@@ -856,7 +856,7 @@ public extension Data {
         // powerInfo
         var voltage: Double?
         var txPower: Int?
-        if let powerInfo = self[9...10].withUnsafeBytes({ $0.bindMemory(to: UInt16.self) }).map(UInt16.init(bigEndian:)).first {
+        if let powerInfo = self[7...8].withUnsafeBytes({ $0.bindMemory(to: UInt16.self) }).map(UInt16.init(bigEndian:)).first {
             let v = powerInfo >> 5
             if v == 0b11111111111 {
                 voltage = nil
@@ -885,7 +885,7 @@ public extension Data {
 
         // measurementSequenceNumber
         var measurementSequenceNumber: Int?
-        if let msn = self[12...13].withUnsafeBytes({ $0.bindMemory(to: UInt16.self) }).map(UInt16.init(bigEndian:)).first {
+        if let msn = self[9...10].withUnsafeBytes({ $0.bindMemory(to: UInt16.self) }).map(UInt16.init(bigEndian:)).first {
             if msn == UInt16.max {
                 measurementSequenceNumber = nil
             } else {
