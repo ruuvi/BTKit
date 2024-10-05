@@ -66,7 +66,6 @@ public struct RuuviDecoderiOS: BTDecoder {
             return .ruuvi(.tag(.h5(tag)))
         case 197:  // Handle version C5
             print("EKHANE")
-            guard data.count > 19 else { return nil }
             let ruuvi = data.ruuviHeartbeatC5()
             let tag = RuuviHeartbeatC5(
                 uuid: uuid,
