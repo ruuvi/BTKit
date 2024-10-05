@@ -130,12 +130,6 @@ class BTScanneriOS: NSObject, BTScanner {
         if shouldObserveLostDevices && lostTimer == nil {
             startLostDevicesTimer()
         }
-
-        if #available(iOS 13.0, *) {
-            print("BALCHAL-123: ", CBCentralManager.supports(.extendedScanAndConnect))
-        } else {
-            // Fallback on earlier versions
-        }
     }
 
     private func stopIfNeeded() {
@@ -177,8 +171,6 @@ extension BTScanneriOS: CBCentralManagerDelegate {
 
     func centralManager(_ central: CBCentralManager, didDiscover peripheral: CBPeripheral, advertisementData: [String: Any], rssi RSSI: NSNumber) {
         guard RSSI.intValue != 127 else { return }
-        print("EKHANE:")
-        dump(advertisementData)
         let uuid = peripheral.identifier.uuidString
         let isConnectable = (advertisementData[CBAdvertisementDataIsConnectable] as? NSNumber)?.boolValue ?? false
         for decoder in decoders {
