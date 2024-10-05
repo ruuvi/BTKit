@@ -800,13 +800,14 @@ extension BTBackgroundScanneriOS {
         let id = UUID()
 
         queue.async { [weak self] in
-//            // Create a RuuviBTService with the provided service UUID
-//            let service = RuuviBTService(uuid: CBUUID(string: uuid))
-//
-//            // Check if the service is already added to avoid duplicates
-//            if !(self?.services.contains(where: { $0.uuid == service.uuid }) ?? false) {
-//                self?.services.append(service)
-//            }
+            // Create a RuuviBTService with the provided service UUID
+            let service = RuuviBTService(uuid: CBUUID(string: uuid))
+
+            // Check if the service is already added to avoid duplicates
+            if !(self?.services.contains(where: { $0.uuid == service.uuid }) ?? false) {
+                self?.services.append(service)
+            }
+
             self?.observations.observe[id] = ObserveObservation(block: { [weak self, weak observer] device in
                 guard let observer = observer else {
                     self?.observations.observe.removeValue(forKey: id)
@@ -895,19 +896,19 @@ extension BTBackgroundScanneriOS: CBCentralManagerDelegate {
     func centralManager(_ central: CBCentralManager, didDiscover peripheral: CBPeripheral, advertisementData: [String: Any], rssi RSSI: NSNumber) {
         guard RSSI.intValue != 127 else { return }
 
-//        // Process observations for advertisement data
-//        observations.observe.values.forEach { observe in
-//            for decoder in decoders {
-//                if let device = decoder.decodeAdvertisement(
-//                    uuid: peripheral.identifier.uuidString,
-//                    rssi: RSSI,
-//                    advertisementData: advertisementData
-//                ) {
-//                    observe.block(device)
-//                    break
-//                }
-//            }
-//        }
+        // Process observations for advertisement data
+        observations.observe.values.forEach { observe in
+            for decoder in decoders {
+                if let device = decoder.decodeAdvertisement(
+                    uuid: peripheral.identifier.uuidString,
+                    rssi: RSSI,
+                    advertisementData: advertisementData
+                ) {
+                    observe.block(device)
+                    break
+                }
+            }
+        }
 
         observations.connect.values
             .filter({ $0.uuid == peripheral.identifier.uuidString })
