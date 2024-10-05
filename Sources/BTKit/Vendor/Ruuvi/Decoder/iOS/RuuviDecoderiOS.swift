@@ -33,6 +33,31 @@ public struct RuuviDecoderiOS: BTDecoder {
             let ruuvi = parsable.ruuvi5()
             let tag = RuuviData5(uuid: uuid, rssi: rssi, isConnectable: isConnectable, version: Int(version), humidity: ruuvi.humidity, temperature: ruuvi.temperature, pressure: ruuvi.pressure, accelerationX: ruuvi.accelerationX, accelerationY: ruuvi.accelerationY, accelerationZ: ruuvi.accelerationZ, voltage: ruuvi.voltage, movementCounter: ruuvi.movementCounter, measurementSequenceNumber: ruuvi.measurementSequenceNumber, txPower: ruuvi.txPower, mac: ruuvi.mac)
             return .ruuvi(.tag(.n5(tag)))
+        case 197:
+            guard parsable.count > 19 else { return nil }
+            print("DEKHI: ")
+            dump(data)
+//            let serviceUUID = extract16ByteServiceUUID(from: parsable)
+            let ruuvi = parsable.ruuviC5()
+            let tag = RuuviDataC5(
+                uuid: uuid,
+                serviceUUID: nil,
+                rssi: rssi,
+                isConnectable: isConnectable,
+                version: Int(
+                    version
+                ),
+                humidity: ruuvi.humidity,
+                temperature: ruuvi.temperature, 
+                pressure: ruuvi.pressure,
+                voltage: ruuvi.voltage,
+                movementCounter: ruuvi.movementCounter,
+                measurementSequenceNumber: ruuvi.measurementSequenceNumber,
+                txPower: ruuvi.txPower,
+                mac: ruuvi.mac
+            )
+            print("BALDA: ", tag)
+            return .ruuvi(.tag(.nC5(tag)))
         default:
             return nil
         }
@@ -78,7 +103,6 @@ public struct RuuviDecoderiOS: BTDecoder {
                 measurementSequenceNumber: ruuvi.measurementSequenceNumber,
                 txPower: ruuvi.txPower
             )
-            print("BALDA: ", tag)
             return .ruuvi(.tag(.hC5(tag)))
 
         default:
