@@ -44,10 +44,45 @@ public struct RuuviDecoderiOS: BTDecoder {
         let isConnectable = true
         let version = Int(data[0])
         switch version {
-        case 5:
-            let ruuvi = data.ruuviHeartbeat1()
-            let tag = RuuviHeartbeat1(uuid: uuid, isConnectable: isConnectable, version: Int(version), humidity: ruuvi.humidity, temperature: ruuvi.temperature, pressure: ruuvi.pressure, accelerationX: ruuvi.accelerationX, accelerationY: ruuvi.accelerationY, accelerationZ: ruuvi.accelerationZ, voltage: ruuvi.voltage, movementCounter: ruuvi.movementCounter, measurementSequenceNumber: ruuvi.measurementSequenceNumber, txPower: ruuvi.txPower)
-            return .ruuvi(.tag(.h1(tag)))
+        case 5: // Handle version C5
+            let ruuvi = data.ruuviHeartbeat5()
+            let tag = RuuviHeartbeat5(
+                uuid: uuid,
+                isConnectable: isConnectable,
+                version: Int(
+                    version
+                ),
+                humidity: ruuvi.humidity,
+                temperature: ruuvi.temperature,
+                pressure: ruuvi.pressure,
+                accelerationX: ruuvi.accelerationX,
+                accelerationY: ruuvi.accelerationY,
+                accelerationZ: ruuvi.accelerationZ,
+                voltage: ruuvi.voltage,
+                movementCounter: ruuvi.movementCounter,
+                measurementSequenceNumber: ruuvi.measurementSequenceNumber,
+                txPower: ruuvi.txPower
+            )
+            return .ruuvi(.tag(.h5(tag)))
+        case 197:  // Handle version C5
+            print("EKHANE")
+            guard data.count > 19 else { return nil }
+            let ruuvi = data.ruuviHeartbeatC5()
+            let tag = RuuviHeartbeatC5(
+                uuid: uuid,
+                isConnectable: isConnectable,
+                version: Int(version),
+                humidity: ruuvi.humidity,
+                temperature: ruuvi.temperature,
+                pressure: ruuvi.pressure,
+                voltage: ruuvi.voltage,
+                movementCounter: ruuvi.movementCounter,
+                measurementSequenceNumber: ruuvi.measurementSequenceNumber,
+                txPower: ruuvi.txPower
+            )
+            print("BALDA: ", tag)
+            return .ruuvi(.tag(.hC5(tag)))
+
         default:
             return nil
         }

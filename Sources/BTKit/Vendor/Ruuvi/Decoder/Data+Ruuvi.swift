@@ -69,13 +69,23 @@ public extension Ruuvi {
         public var mac: String
     }
 
-    struct Heartbeat1 {
+    struct Heartbeat5 {
         public var humidity: Double?
         public var temperature: Double?
         public var pressure: Double?
         public var accelerationX: Double?
         public var accelerationY: Double?
         public var accelerationZ: Double?
+        public var movementCounter: Int?
+        public var measurementSequenceNumber: Int?
+        public var voltage: Double?
+        public var txPower: Int?
+    }
+
+    struct HeartbeatC5 {
+        public var humidity: Double?
+        public var temperature: Double?
+        public var pressure: Double?
         public var movementCounter: Int?
         public var measurementSequenceNumber: Int?
         public var voltage: Double?
@@ -677,7 +687,7 @@ public extension Data {
         )
     }
 
-    func ruuviHeartbeat1() -> Ruuvi.Heartbeat1 {
+    func ruuviHeartbeat5() -> Ruuvi.Heartbeat5 {
         // temperature
         var temperature: Double?
         if let t = self[1...2].withUnsafeBytes({ $0.bindMemory(to: Int16.self) }).map(Int16.init(bigEndian:)).first {
@@ -792,7 +802,108 @@ public extension Data {
             measurementSequenceNumber = nil
         }
 
-        return Ruuvi.Heartbeat1(humidity: humidity, temperature: temperature, pressure: pressure, accelerationX: accelerationX, accelerationY: accelerationY, accelerationZ: accelerationZ, movementCounter: movementCounter, measurementSequenceNumber: measurementSequenceNumber, voltage: voltage, txPower: txPower)
+        return Ruuvi.Heartbeat5(
+            humidity: humidity,
+            temperature: temperature,
+            pressure: pressure,
+            accelerationX: accelerationX,
+            accelerationY: accelerationY,
+            accelerationZ: accelerationZ,
+            movementCounter: movementCounter,
+            measurementSequenceNumber: measurementSequenceNumber,
+            voltage: voltage,
+            txPower: txPower
+        )
+    }
+
+    func ruuviHeartbeatC5() -> Ruuvi.HeartbeatC5 {
+        // temperature
+        var temperature: Double?
+        if let t = self[3...4].withUnsafeBytes({ $0.bindMemory(to: Int16.self) }).map(Int16.init(bigEndian:)).first {
+            if t == Int16.min {
+                temperature = nil
+            } else {
+                temperature = Double(t) / 200.0
+            }
+        } else {
+            temperature = nil
+        }
+
+        // humidity
+        var humidity: Double?
+        if let h = self[5...6].withUnsafeBytes({ $0.bindMemory(to: UInt16.self) }).map(UInt16.init(bigEndian:)).first {
+            if h == UInt16.max {
+                humidity = nil
+            } else {
+                humidity = Double(h) / 400.0
+            }
+        } else {
+            humidity = nil
+        }
+
+        // pressure
+        var pressure: Double?
+        if let p = self[7...8].withUnsafeBytes({ $0.bindMemory(to: UInt16.self) }).map(UInt16.init(bigEndian:)).first {
+            if p == UInt16.max {
+                pressure = nil
+            } else {
+                pressure = (Double(p) + 50000.0) / 100.0
+            }
+        } else {
+            pressure = nil
+        }
+
+        // powerInfo
+        var voltage: Double?
+        var txPower: Int?
+        if let powerInfo = self[9...10].withUnsafeBytes({ $0.bindMemory(to: UInt16.self) }).map(UInt16.init(bigEndian:)).first {
+            let v = powerInfo >> 5
+            if v == 0b11111111111 {
+                voltage = nil
+            } else {
+                voltage = Double(v) / 1000.0 + 1.6
+            }
+            let tx = powerInfo & 0b11111
+            if tx == 0b11111 {
+                txPower = nil
+            } else {
+                txPower = Int(tx) * 2 - 40
+            }
+        } else {
+            voltage = nil
+            txPower = nil
+        }
+
+        // movementCounter
+        var movementCounter: Int?
+        let mc = self[11]
+        if mc == UInt8.max {
+            movementCounter = nil
+        } else {
+            movementCounter = Int(mc)
+        }
+
+        // measurementSequenceNumber
+        var measurementSequenceNumber: Int?
+        if let msn = self[12...13].withUnsafeBytes({ $0.bindMemory(to: UInt16.self) }).map(UInt16.init(bigEndian:)).first {
+            if msn == UInt16.max {
+                measurementSequenceNumber = nil
+            } else {
+                measurementSequenceNumber = Int(msn)
+            }
+        } else {
+            measurementSequenceNumber = nil
+        }
+
+        return Ruuvi.HeartbeatC5(
+            humidity: humidity,
+            temperature: temperature,
+            pressure: pressure,
+            movementCounter: movementCounter,
+            measurementSequenceNumber: measurementSequenceNumber,
+            voltage: voltage,
+            txPower: txPower
+        )
     }
 
     private func addColons(mac: String) -> String {

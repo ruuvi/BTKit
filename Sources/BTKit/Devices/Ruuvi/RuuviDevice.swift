@@ -22,7 +22,8 @@ public enum RuuviTag {
     case v6(RuuviData6)
     case vC5(RuuviDataC5)
 
-    case h1(RuuviHeartbeat1)
+    case h5(RuuviHeartbeat5)
+    case hC5(RuuviHeartbeatC5)
 
     case n2(RuuviData2)
     case n3(RuuviData3)
@@ -96,7 +97,9 @@ public extension RuuviTag {
             return data.voltage
         case .vC5(let data):
             return data.voltage
-        case .h1(let heartbeat):
+        case .h5(let heartbeat):
+            return heartbeat.voltage
+        case .hC5(let heartbeat):
             return heartbeat.voltage
         case .n2:
             return nil
@@ -127,8 +130,10 @@ public extension RuuviTag {
             return nil
         case .vC5:
             return nil
-        case .h1(let heartbeat):
+        case .h5(let heartbeat):
             return heartbeat.accelerationX
+        case .hC5:
+            return nil
         case .n2:
             return nil
         case .n3(let data):
@@ -158,8 +163,10 @@ public extension RuuviTag {
             return nil
         case .vC5:
             return nil
-        case .h1(let heartbeat):
+        case .h5(let heartbeat):
             return heartbeat.accelerationY
+        case .hC5:
+            return nil
         case .n2:
             return nil
         case .n3(let data):
@@ -189,8 +196,10 @@ public extension RuuviTag {
             return nil
         case .vC5:
             return nil
-        case .h1(let heartbeat):
+        case .h5(let heartbeat):
             return heartbeat.accelerationZ
+        case .hC5:
+            return nil
         case .n2:
             return nil
         case .n3(let data):
@@ -220,7 +229,9 @@ public extension RuuviTag {
             return nil
         case .vC5(let data):
             return data.movementCounter
-        case .h1(let heartbeat):
+        case .h5(let heartbeat):
+            return heartbeat.movementCounter
+        case .hC5(let heartbeat):
             return heartbeat.movementCounter
         case .n2:
             return nil
@@ -251,7 +262,9 @@ public extension RuuviTag {
             return nil
         case .vC5(let data):
             return data.measurementSequenceNumber
-        case .h1(let heartbeat):
+        case .h5(let heartbeat):
+            return heartbeat.measurementSequenceNumber
+        case .hC5(let heartbeat):
             return heartbeat.measurementSequenceNumber
         case .n2:
             return nil
@@ -282,7 +295,9 @@ public extension RuuviTag {
             return nil
         case .vC5(let data):
             return data.txPower
-        case .h1(let heartbeat):
+        case .h5(let heartbeat):
+            return heartbeat.txPower
+        case .hC5(let heartbeat):
             return heartbeat.txPower
         case .n2:
             return nil
@@ -313,7 +328,9 @@ public extension RuuviTag {
             return data.uuid
         case .vC5(let data):
             return data.uuid
-        case .h1(let heartbeat):
+        case .h5(let heartbeat):
+            return heartbeat.uuid
+        case .hC5(let heartbeat):
             return heartbeat.uuid
         case .n2(let data):
             return data.uuid
@@ -344,7 +361,7 @@ public extension RuuviTag {
             return data.rssi
         case .vC5(let data):
             return data.rssi
-        case .h1:
+        case .h5, .hC5:
             return nil
         case .n2(let data):
             return data.rssi
@@ -375,7 +392,9 @@ public extension RuuviTag {
             return data.isConnectable
         case .vC5(let data):
             return data.isConnectable
-        case .h1(let heartbeat):
+        case .h5(let heartbeat):
+            return heartbeat.isConnectable
+        case .hC5(let heartbeat):
             return heartbeat.isConnectable
         case .n2(let data):
             return data.isConnectable
@@ -406,7 +425,9 @@ public extension RuuviTag {
             return data.version
         case .vC5(let data):
             return data.version
-        case .h1(let heartbeat):
+        case .h5(let heartbeat):
+            return heartbeat.version
+        case .hC5(let heartbeat):
             return heartbeat.version
         case .n2(let data):
             return data.version
@@ -437,7 +458,9 @@ public extension RuuviTag {
             return data.humidity
         case .vC5(let data):
             return data.humidity
-        case .h1(let heartbeat):
+        case .h5(let heartbeat):
+            return heartbeat.humidity
+        case .hC5(let heartbeat):
             return heartbeat.humidity
         case .n2(let data):
             return data.humidity
@@ -468,7 +491,9 @@ public extension RuuviTag {
             return data.pressure
         case .vC5(let data):
             return data.pressure
-        case .h1(let heartbeat):
+        case .h5(let heartbeat):
+            return heartbeat.pressure
+        case .hC5(let heartbeat):
             return heartbeat.pressure
         case .n2(let data):
             return data.pressure
@@ -515,7 +540,9 @@ public extension RuuviTag {
             return data.temperature
         case .vC5(let data):
             return data.temperature
-        case .h1(let heartbeat):
+        case .h5(let heartbeat):
+            return heartbeat.temperature
+        case .hC5(let heartbeat):
             return heartbeat.temperature
         case .n2(let data):
             return data.temperature
@@ -593,9 +620,12 @@ extension RuuviTag: Hashable {
         case .vC5(let data):
             hasher.combine(data.uuid)
             hasher.combine("vC5")
-        case .h1(let heartbeat):
+        case .h5(let heartbeat):
             hasher.combine(heartbeat.uuid)
-            hasher.combine("h1")
+            hasher.combine("h5")
+        case .hC5(let heartbeat):
+            hasher.combine(heartbeat.uuid)
+            hasher.combine("hC5")
         case .n2(let data):
             hasher.combine(data.uuid)
             hasher.combine("n2")
