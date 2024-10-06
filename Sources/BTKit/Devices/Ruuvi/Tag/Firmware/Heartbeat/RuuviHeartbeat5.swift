@@ -1,4 +1,4 @@
-public struct RuuviHeartbeat1 {
+public struct RuuviHeartbeat5 {
     public var uuid: String
     public var isConnectable: Bool
     public var version: Int
