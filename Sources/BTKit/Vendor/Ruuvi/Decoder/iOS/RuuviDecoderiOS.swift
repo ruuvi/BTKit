@@ -7,12 +7,74 @@ public struct RuuviDecoderiOS: BTDecoder {
 
     public func decodeNetwork(uuid: String, rssi: Int, isConnectable: Bool, payload: String) -> BTDevice? {
         guard let data = payload.hex else { return nil }
-        guard data.count > 18 else { return nil }
-        let versionOffset = 7
-        let version = Int(data[versionOffset])
-        let parsableOffset = 5
-        let parsable = Data(data[parsableOffset...data.count - 1])
+        var offset = 0
+        var version: UInt8?
+        var parsable: Data?
+        var serviceUUID: String?
+
+        // Parse the advertising data into AD structures
+        while offset < data.count {
+            // Each AD structure starts with a length byte
+            let length = Int(data[offset])
+            offset += 1
+
+            // Check if length is valid
+            guard length > 0, offset + length - 1 < data.count else {
+                break
+            }
+
+            // Type byte
+            let type = data[offset]
+            offset += 1
+
+            // Value bytes
+            let valueLength = length - 1
+            let valueStart = offset
+            let valueEnd = offset + valueLength
+            let valueData = data[valueStart..<valueEnd]
+            offset += valueLength
+
+            switch type {
+            case 0xFF:
+                // Manufacturer Specific Data
+                // Company Identifier (2 bytes), then data
+                // At least 3 bytes: 2 bytes company ID + 1 byte data format
+                guard valueLength >= 3 else { continue }
+                let companyID = (UInt16(valueData[valueData.startIndex + 1]) << 8) | UInt16(valueData[valueData.startIndex])
+                // Check if companyID matches Ruuvi (0x0499)
+                if companyID == 0x0499 {
+                    // Data format version is the next byte
+                    version = valueData[valueData.startIndex + 2]
+                    // Skip company ID (2 bytes) and version (1 byte)
+                    parsable = valueData.dropFirst(3)
+                }
+            case 0x16: 
+                // Service Data - 16-bit UUID
+                // Service UUID (2 bytes), then data
+                guard valueLength >= 3 else { continue }
+                let uuidBytes = valueData[valueData.startIndex..<valueData.startIndex+2]
+                serviceUUID = uuidBytes.map { String(format: "%02X", $0) }.joined()
+                // Data format version is the next byte
+                version = valueData[valueData.startIndex + 2]
+                // Skip service UUID (2 bytes) and version (1 byte)
+                parsable = valueData.dropFirst(3)
+            default:
+                continue
+            }
+
+            // If we've found the version and parsable data, no need to continue parsing
+            if version != nil && parsable != nil {
+                break
+            }
+        }
+
+        // Ensure we have the necessary data to proceed
+        guard let version = version, let parsable = parsable else {
+            return nil
+        }
+
         print("OMA: ", version)
+
         switch version {
         case 2:
             guard parsable.count > 5 else { return nil }
@@ -34,7 +96,7 @@ public struct RuuviDecoderiOS: BTDecoder {
             let ruuvi = parsable.ruuvi5()
             let tag = RuuviData5(uuid: uuid, rssi: rssi, isConnectable: isConnectable, version: Int(version), humidity: ruuvi.humidity, temperature: ruuvi.temperature, pressure: ruuvi.pressure, accelerationX: ruuvi.accelerationX, accelerationY: ruuvi.accelerationY, accelerationZ: ruuvi.accelerationZ, voltage: ruuvi.voltage, movementCounter: ruuvi.movementCounter, measurementSequenceNumber: ruuvi.measurementSequenceNumber, txPower: ruuvi.txPower, mac: ruuvi.mac)
             return .ruuvi(.tag(.n5(tag)))
-        case 21:
+        case 197:
             print("DEKHI: ")
             dump(data)
             guard parsable.count > 19 else { return nil }
@@ -42,7 +104,7 @@ public struct RuuviDecoderiOS: BTDecoder {
             let ruuvi = parsable.ruuviC5()
             let tag = RuuviDataC5(
                 uuid: uuid,
-                serviceUUID: nil,
+                serviceUUID: serviceUUID,
                 rssi: rssi,
                 isConnectable: isConnectable,
                 version: Int(
