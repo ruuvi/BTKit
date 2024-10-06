@@ -151,6 +151,8 @@ public struct RuuviDecoderiOS: BTDecoder {
                 return .ruuvi(.tag(.v3(tag)))
 
             case 5:  // Handle version 5
+                print("BALCHAL AGAIN: ")
+                dump(advertisementData)
                 guard manufacturerData.count > 25 else { return nil }
                 let ruuvi = manufacturerData.ruuvi5()
                 let tag = RuuviData5(uuid: uuid, rssi: rssi.intValue, isConnectable: isConnectable, version: Int(version), humidity: ruuvi.humidity, temperature: ruuvi.temperature, pressure: ruuvi.pressure, accelerationX: ruuvi.accelerationX, accelerationY: ruuvi.accelerationY, accelerationZ: ruuvi.accelerationZ, voltage: ruuvi.voltage, movementCounter: ruuvi.movementCounter, measurementSequenceNumber: ruuvi.measurementSequenceNumber, txPower: ruuvi.txPower, mac: ruuvi.mac)
