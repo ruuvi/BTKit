@@ -28,7 +28,6 @@ public struct RuuviDecoderiOS: BTDecoder {
         guard data.count > parsableOffset else { return nil }
         let parsable = Data(data[parsableOffset...data.count - 1])
 
-        print("OMA: ", version, parsable.count)
         switch version {
         case 2:
             guard parsable.count > 5 else { return nil }
@@ -51,8 +50,6 @@ public struct RuuviDecoderiOS: BTDecoder {
             let tag = RuuviData5(uuid: uuid, rssi: rssi, isConnectable: isConnectable, version: Int(version), humidity: ruuvi.humidity, temperature: ruuvi.temperature, pressure: ruuvi.pressure, accelerationX: ruuvi.accelerationX, accelerationY: ruuvi.accelerationY, accelerationZ: ruuvi.accelerationZ, voltage: ruuvi.voltage, movementCounter: ruuvi.movementCounter, measurementSequenceNumber: ruuvi.measurementSequenceNumber, txPower: ruuvi.txPower, mac: ruuvi.mac)
             return .ruuvi(.tag(.n5(tag)))
         case 197:
-            print("DEKHI: ")
-            dump(data)
             guard parsable.count > 19 else { return nil }
             let ruuvi = parsable.ruuviC5()
             let tag = RuuviDataC5(
@@ -72,7 +69,6 @@ public struct RuuviDecoderiOS: BTDecoder {
                 txPower: ruuvi.txPower,
                 mac: ruuvi.mac
             )
-            print("BALDA: ", tag)
             return .ruuvi(.tag(.nC5(tag)))
         default:
             return nil
@@ -166,8 +162,6 @@ public struct RuuviDecoderiOS: BTDecoder {
                 return .ruuvi(.tag(.v3(tag)))
 
             case 5:  // Handle version 5
-                print("BALCHAL AGAIN: ")
-                dump(advertisementData)
                 guard manufacturerData.count > 25 else { return nil }
                 let ruuvi = manufacturerData.ruuvi5()
                 let tag = RuuviData5(uuid: uuid, rssi: rssi.intValue, isConnectable: isConnectable, version: Int(version), humidity: ruuvi.humidity, temperature: ruuvi.temperature, pressure: ruuvi.pressure, accelerationX: ruuvi.accelerationX, accelerationY: ruuvi.accelerationY, accelerationZ: ruuvi.accelerationZ, voltage: ruuvi.voltage, movementCounter: ruuvi.movementCounter, measurementSequenceNumber: ruuvi.measurementSequenceNumber, txPower: ruuvi.txPower, mac: ruuvi.mac)
@@ -224,8 +218,6 @@ public struct RuuviDecoderiOS: BTDecoder {
 
             case 197:  // Handle version C5
                 guard manufacturerData.count > 19 else { return nil }
-                print("BALCHAL: ")
-                dump(advertisementData)
                 let ruuvi = manufacturerData.ruuviC5()
                 let tag = RuuviDataC5(
                     uuid: uuid,
