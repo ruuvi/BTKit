@@ -9,26 +9,26 @@ public struct RuuviDecoderiOS: BTDecoder {
         guard let data = payload.hex else { return nil }
         guard data.count > 18 else { return nil }
 
-        var versionOffset: Int
-        var parsableOffset: Int
+        var offsetAdjustment = 0
         var serviceUUID: String?
 
         // Check if the service UUID is present
-        if data.count > 5, data[3] == 0x03, data[4] == 0x02 {
+        if data.count > 6, data[3] == 0x03, data[4] == 0x02 {
             // Service UUID is present
+            offsetAdjustment = 4 // The service UUID AD structure is 4 bytes long
+            // Extract the service UUID (optional)
             serviceUUID = data[5...6].map { String(format: "%02X", $0) }.joined()
-            // Adjust offsets accordingly
-            versionOffset = 11
-            parsableOffset = 12
-        } else {
-            // Service UUID is not present
-            versionOffset = 7
-            parsableOffset = 8
         }
 
+        let versionOffset = 7 + offsetAdjustment
+        guard data.count > versionOffset else { return nil }
         let version = Int(data[versionOffset])
-        let parsable = Data(data[parsableOffset...data.count - 1])
-        print("OMA: ", version)
+
+        let parsableOffset = 5 + offsetAdjustment
+        guard data.count > parsableOffset else { return nil }
+        let parsable = data[parsableOffset...]
+
+        print("OMA: ", version, parsable.count)
         switch version {
         case 2:
             guard parsable.count > 5 else { return nil }
