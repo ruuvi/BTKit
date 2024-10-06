@@ -50,7 +50,7 @@ public struct RuuviDecoderiOS: BTDecoder {
             let ruuvi = parsable.ruuvi5()
             let tag = RuuviData5(uuid: uuid, rssi: rssi, isConnectable: isConnectable, version: Int(version), humidity: ruuvi.humidity, temperature: ruuvi.temperature, pressure: ruuvi.pressure, accelerationX: ruuvi.accelerationX, accelerationY: ruuvi.accelerationY, accelerationZ: ruuvi.accelerationZ, voltage: ruuvi.voltage, movementCounter: ruuvi.movementCounter, measurementSequenceNumber: ruuvi.measurementSequenceNumber, txPower: ruuvi.txPower, mac: ruuvi.mac)
             return .ruuvi(.tag(.n5(tag)))
-        case 21:
+        case 197:
             print("DEKHI: ")
             dump(data)
             guard parsable.count > 19 else { return nil }
