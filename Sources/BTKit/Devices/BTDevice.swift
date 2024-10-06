@@ -24,7 +24,7 @@ public extension BTDevice {
             return nil
         }
     }
-    
+
     var uuid: String {
         switch self {
         case .ruuvi(let ruuviDevice):
@@ -36,7 +36,7 @@ public extension BTDevice {
             return unknownDevice.uuid
         }
     }
-    
+
     var rssi: Int? {
         switch self {
         case .ruuvi(let ruuviDevice):
@@ -48,7 +48,7 @@ public extension BTDevice {
             return unknownDevice.rssi
         }
     }
-    
+
     var isConnectable: Bool {
         switch self {
         case .ruuvi(let ruuviDevice):
@@ -58,6 +58,18 @@ public extension BTDevice {
             }
         case .unknown(let unknownDevice):
             return unknownDevice.isConnectable
+        }
+    }
+
+    var serviceUUID: String? {
+        switch self {
+        case .ruuvi(let ruuviDevice):
+            switch ruuviDevice {
+            case .tag(let ruuviTag):
+                return ruuviTag.serviceUUID
+            }
+        default:
+            return nil
         }
     }
 }

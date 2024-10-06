@@ -10,10 +10,10 @@ let package = Package(
     products: [
         .library(
             name: "BTKit",
-            targets: ["BTKit"]),
+            targets: ["BTKit"])
     ],
     dependencies: [
-        .package(url: "https://github.com/apple/swift-docc-plugin", from: "1.0.0"),
+        .package(url: "https://github.com/apple/swift-docc-plugin", from: "1.0.0")
     ],
     targets: [
         .target(
@@ -22,6 +22,6 @@ let package = Package(
             resources: [.process("Resources")]),
         .testTarget(
             name: "BTKitTests",
-            dependencies: ["BTKit"]),
+            dependencies: ["BTKit"])
     ]
 )

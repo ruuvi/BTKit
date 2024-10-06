@@ -20,7 +20,7 @@ public struct BTKitParsedOptionsInfo {
     public var demoCount: Int = 0
     public var connectionTimeout: TimeInterval = 0
     public var serviceTimeout: TimeInterval = 0
-    
+
     public init(_ info: BTScannerOptionsInfo?) {
         guard let info = info else { return }
         for option in info {

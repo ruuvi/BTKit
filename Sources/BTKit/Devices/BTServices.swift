@@ -38,7 +38,7 @@ public enum BTServiceType {
 public enum BTGATTDeviceInformationService {
     case firmwareRevision(BTGATTDeviceInformationFirmwareRevisionService)
     case serialRevision(BTGATTDeviceInformationSerialRevisionService)
-    
+
     var uuid: CBUUID {
         switch self {
         case .firmwareRevision(let value):
@@ -47,7 +47,7 @@ public enum BTGATTDeviceInformationService {
             return value.uuid
         }
     }
-    
+
     var characteristic: CBUUID {
         switch self {
         case .firmwareRevision(let value):
@@ -78,14 +78,14 @@ public enum BTGATTDeviceInformationFirmwareRevisionService {
 
 public enum BTGATTDeviceInformationSerialRevisionService {
     case standard
-    
+
     var uuid: CBUUID {
         switch self {
         case .standard:
             return CBUUID(string: "180a")
         }
     }
-    
+
     var characteristic: CBUUID {
         switch self {
         case .standard:
@@ -99,11 +99,11 @@ public enum BTRuuviNUSService {
     case humidity // relative in %
     case pressure // in hPa
     case all
-    
+
     var uuid: CBUUID {
         return CBUUID(string: "6E400001-B5A3-F393-E0A9-E50E24DCCA9E")
     }
-    
+
     var flag: UInt8 {
         switch self {
         case .temperature:
@@ -116,7 +116,7 @@ public enum BTRuuviNUSService {
             return 0x3A
         }
     }
-    
+
     var multiplier: Double {
         switch self {
         case .temperature:
@@ -129,7 +129,7 @@ public enum BTRuuviNUSService {
             return 0.01
         }
     }
-    
+
     func request(from date: Date) -> Data {
         let nowTI = Date().timeIntervalSince1970
         var now = UInt32(nowTI)
@@ -148,8 +148,8 @@ public enum BTRuuviNUSService {
         data.append(fromData)
         return data
     }
-    
-    func responseRow(from data: Data) -> (Date,BTRuuviNUSService,Double)? {
+
+    func responseRow(from data: Data) -> (Date, BTRuuviNUSService, Double)? {
         guard data.count == 11 else { return nil }
         var service: BTRuuviNUSService
         switch data[1] {
@@ -165,35 +165,35 @@ public enum BTRuuviNUSService {
         guard let value = response(from: data, for: service) else { return nil }
         return (value.0, service, value.1)
     }
-    
-    func response(from data: Data) -> (Date,Double)? {
+
+    func response(from data: Data) -> (Date, Double)? {
         return response(from: data, for: self)
     }
-    
-    func response(from data: Data, for service: BTRuuviNUSService) -> (Date,Double)? {
+
+    func response(from data: Data, for service: BTRuuviNUSService) -> (Date, Double)? {
         guard data.count == 11 else { return nil }
         guard data[1] == service.flag else { return nil }
         let timestampData = data[3...6]
         var timestamp: UInt32 = 0
-        let timestampBytesCopied = withUnsafeMutableBytes(of: &timestamp, { timestampData.copyBytes(to: $0)} )
+        let timestampBytesCopied = withUnsafeMutableBytes(of: &timestamp, { timestampData.copyBytes(to: $0)})
         timestamp = UInt32(bigEndian: timestamp)
         assert(timestampBytesCopied == MemoryLayout.size(ofValue: timestamp))
-        
+
         let valueData = data[7...10]
         var value: Int32 = 0
         let valueBytesCopied = withUnsafeMutableBytes(of: &value, { valueData.copyBytes(to: $0) })
         assert(valueBytesCopied == MemoryLayout.size(ofValue: value))
-        
+
         let date = Date(timeIntervalSince1970: TimeInterval(timestamp))
         value = Int32(bigEndian: value)
         return (date, Double(value) * service.multiplier)
     }
-    
+
     func isEndOfTransmissionFlag(data: Data) -> Bool {
         guard data.count == 11 else { return false }
         let payload = data[3...10]
         var value: UInt64 = 0
-        let bytesCopied = withUnsafeMutableBytes(of: &value, { payload.copyBytes(to: $0)} )
+        let bytesCopied = withUnsafeMutableBytes(of: &value, { payload.copyBytes(to: $0)})
         assert(bytesCopied == MemoryLayout.size(ofValue: value))
         return value == UInt64.max
     }
@@ -240,7 +240,7 @@ public struct BTRuuviServices {
 }
 
 public struct BTGATTService {
-    public func serialRevision<T:AnyObject>(
+    public func serialRevision<T: AnyObject>(
         for observer: T,
         uuid: String,
         options: BTScannerOptionsInfo? = nil,
@@ -256,8 +256,8 @@ public struct BTGATTService {
             result: result
         )
     }
-    
-    public func firmwareRevision<T:AnyObject>(
+
+    public func firmwareRevision<T: AnyObject>(
         for observer: T,
         uuid: String,
         options: BTScannerOptionsInfo? = nil,
@@ -273,8 +273,8 @@ public struct BTGATTService {
             result: result
         )
     }
-    
-    private func serveRevision<T:AnyObject>(
+
+    private func serveRevision<T: AnyObject>(
         for observer: T,
         uuid: String,
         type: BTGATTServiceType,
@@ -314,7 +314,7 @@ public struct BTGATTService {
             }
         })
     }
-    
+
     private func serve<T: AnyObject>(
         _ observer: T,
         _ uuid: String,
@@ -336,7 +336,7 @@ public struct BTGATTService {
                     result(observer, .failure(.unexpected(.characteristicIsNil)))
                 }
             }
-        }, response: { (observer, data, finished) in
+        }, response: { (observer, data, _) in
             if let data = data {
                 if let firmwareRevisionString = String(data: data, encoding: .utf8) {
                     result(observer, .success(firmwareRevisionString))
@@ -358,21 +358,20 @@ public struct BTGATTService {
 }
 
 public struct BTKitRuuviNUSService {
-    
-    public func celisus<T: AnyObject>(for observer: T, uuid: String, from date: Date, options: BTScannerOptionsInfo? = nil, progress:((BTServiceProgress) -> Void)? = nil, result: @escaping (T, Result<[RuuviTagEnvLog], BTError>) -> Void) {
+
+    public func celisus<T: AnyObject>(for observer: T, uuid: String, from date: Date, options: BTScannerOptionsInfo? = nil, progress: ((BTServiceProgress) -> Void)? = nil, result: @escaping (T, Result<[RuuviTagEnvLog], BTError>) -> Void) {
         serve(.temperature, for: observer, uuid: uuid, from: date, options: options, result: result)
     }
-    
-    
-    public func humidity<T: AnyObject>(for observer: T, uuid: String, from date: Date, options: BTScannerOptionsInfo? = nil, progress:((BTServiceProgress) -> Void)? = nil, result: @escaping (T, Result<[RuuviTagEnvLog], BTError>) -> Void) {
+
+    public func humidity<T: AnyObject>(for observer: T, uuid: String, from date: Date, options: BTScannerOptionsInfo? = nil, progress: ((BTServiceProgress) -> Void)? = nil, result: @escaping (T, Result<[RuuviTagEnvLog], BTError>) -> Void) {
         serve(.humidity, for: observer, uuid: uuid, from: date, options: options, result: result)
     }
-    
-    public func pressure<T: AnyObject>(for observer: T, uuid: String, from date: Date, options: BTScannerOptionsInfo? = nil, progress:((BTServiceProgress) -> Void)? = nil, result: @escaping (T, Result<[RuuviTagEnvLog], BTError>) -> Void) {
+
+    public func pressure<T: AnyObject>(for observer: T, uuid: String, from date: Date, options: BTScannerOptionsInfo? = nil, progress: ((BTServiceProgress) -> Void)? = nil, result: @escaping (T, Result<[RuuviTagEnvLog], BTError>) -> Void) {
         serve(.pressure, for: observer, uuid: uuid, from: date, options: options, result: result)
     }
-    
-    public func log<T: AnyObject>(for observer: T, uuid: String, from date: Date, options: BTScannerOptionsInfo? = nil, progress:((BTServiceProgress) -> Void)? = nil, result: @escaping (T, Result<Progressable, BTError>) -> Void) {
+
+    public func log<T: AnyObject>(for observer: T, uuid: String, from date: Date, options: BTScannerOptionsInfo? = nil, progress: ((BTServiceProgress) -> Void)? = nil, result: @escaping (T, Result<Progressable, BTError>) -> Void) {
         var connectToken: ObservationToken?
         progress?(.connecting)
         connectToken = BTKit.background.connect(for: observer, uuid: uuid, options: options, connected: { (observer, connectResult) in
@@ -459,13 +458,13 @@ public struct BTKitRuuviNUSService {
             }
         })
     }
-    
+
     private func serveLogs<T: AnyObject>(_ observer: T, _ uuid: String, _ options: BTScannerOptionsInfo?, _ date: Date, _ result: @escaping (T, Result<Progressable, BTError>) -> Void) -> ObservationToken? {
         let info = BTKitParsedOptionsInfo(options)
         var values = [RuuviTagEnvLogFull]()
         var lastValue = RuuviTagEnvLogFullClass()
         let service: BTRuuviNUSService = .all
-        let serveToken = BTKit.background.scanner.serveUART(observer, for: uuid, .ruuvi(.nus(service)), options: options, request: { (observer, peripheral, rx, tx) in
+        let serveToken = BTKit.background.scanner.serveUART(observer, for: uuid, .ruuvi(.nus(service)), options: options, request: { (observer, peripheral, rx, _) in
             if let rx = rx {
                 peripheral?.writeValue(service.request(from: date), for: rx, type: .withResponse)
             } else {
@@ -512,11 +511,11 @@ public struct BTKitRuuviNUSService {
         }
         return serveToken
     }
-    
+
     fileprivate func serveEnv<T: AnyObject>(_ observer: T, _ uuid: String, _ service: BTRuuviNUSService, _ options: BTScannerOptionsInfo?, _ date: Date, _ result: @escaping (T, Result<[RuuviTagEnvLog], BTError>) -> Void) -> ObservationToken? {
         let info = BTKitParsedOptionsInfo(options)
         var values = [RuuviTagEnvLog]()
-        let serveToken = BTKit.background.scanner.serveUART(observer, for: uuid, .ruuvi(.nus(service)), options: options, request: { (observer, peripheral, rx, tx) in
+        let serveToken = BTKit.background.scanner.serveUART(observer, for: uuid, .ruuvi(.nus(service)), options: options, request: { (observer, peripheral, rx, _) in
             if let rx = rx {
                 peripheral?.writeValue(service.request(from: date), for: rx, type: .withResponse)
             } else {
@@ -546,9 +545,9 @@ public struct BTKitRuuviNUSService {
         }
         return serveToken
     }
-    
-    private func serve<T: AnyObject>(_ service: BTRuuviNUSService, for observer: T, uuid: String, from date: Date, options: BTScannerOptionsInfo?, progress:((BTServiceProgress) -> Void)? = nil, result: @escaping (T, Result<[RuuviTagEnvLog], BTError>) -> Void) {
-        
+
+    private func serve<T: AnyObject>(_ service: BTRuuviNUSService, for observer: T, uuid: String, from date: Date, options: BTScannerOptionsInfo?, progress: ((BTServiceProgress) -> Void)? = nil, result: @escaping (T, Result<[RuuviTagEnvLog], BTError>) -> Void) {
+
         var connectToken: ObservationToken?
         progress?(.connecting)
         connectToken = BTKit.background.connect(for: observer, uuid: uuid, options: options, connected: { (observer, connectResult) in
@@ -619,7 +618,7 @@ public struct BTKitRuuviNUSService {
         })
     }
 
-    public func disconnect<T:AnyObject>(
+    public func disconnect<T: AnyObject>(
         for observer: T,
         uuid: String,
         options: BTScannerOptionsInfo?,
@@ -659,4 +658,3 @@ class RuuviTagEnvLogFullClass {
     var humidity: Double? // relative in %
     var pressure: Double? // in hPa
 }
-
