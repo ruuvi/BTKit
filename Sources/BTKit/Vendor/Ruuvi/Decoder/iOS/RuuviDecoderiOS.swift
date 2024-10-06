@@ -208,7 +208,7 @@ public struct RuuviDecoderiOS: BTDecoder {
             case 197:  // Handle version C5
                 guard manufacturerData.count > 19 else { return nil }
                 print("BALCHAL: ")
-                dump(manufacturerData)
+                dump(advertisementData)
                 let ruuvi = manufacturerData.ruuviC5()
                 let tag = RuuviDataC5(
                     uuid: uuid,
