@@ -18,8 +18,9 @@ public struct RuuviDecoderiOS: BTDecoder {
             let length = Int(data[offset])
             offset += 1
 
-            // Check if length is valid
-            guard length > 0, offset + length - 1 < data.count else {
+            // Check if length is valid and within the bounds of the data
+            guard length > 0, offset + length - 1 <= data.count else {
+                // Not enough data, exit the loop
                 break
             }
 
@@ -30,7 +31,14 @@ public struct RuuviDecoderiOS: BTDecoder {
             // Value bytes
             let valueLength = length - 1
             let valueStart = offset
-            let valueEnd = offset + valueLength
+            let valueEnd = valueStart + valueLength
+
+            // Ensure that valueEnd does not exceed data.count
+            guard valueEnd <= data.count else {
+                // Not enough data for value bytes, exit the loop
+                break
+            }
+
             let valueData = data[valueStart..<valueEnd]
             offset += valueLength
 
@@ -38,24 +46,22 @@ public struct RuuviDecoderiOS: BTDecoder {
             case 0xFF:
                 // Manufacturer Specific Data
                 // Company Identifier (2 bytes), then data
-                // At least 3 bytes: 2 bytes company ID + 1 byte data format
-                guard valueLength >= 3 else { continue }
-                let companyID = (UInt16(valueData[valueData.startIndex + 1]) << 8) | UInt16(valueData[valueData.startIndex])
-                // Check if companyID matches Ruuvi (0x0499)
+                guard valueLength >= 3 else { continue } // Need at least 3 bytes
+                let companyID = (UInt16(valueData[1]) << 8) | UInt16(valueData[0])
                 if companyID == 0x0499 {
                     // Data format version is the next byte
-                    version = valueData[valueData.startIndex + 2]
+                    version = valueData[2]
                     // Skip company ID (2 bytes) and version (1 byte)
                     parsable = valueData.dropFirst(3)
                 }
-            case 0x16: 
+            case 0x16:
                 // Service Data - 16-bit UUID
                 // Service UUID (2 bytes), then data
-                guard valueLength >= 3 else { continue }
-                let uuidBytes = valueData[valueData.startIndex..<valueData.startIndex+2]
+                guard valueLength >= 3 else { continue } // Need at least 3 bytes
+                let uuidBytes = valueData[0..<2]
                 serviceUUID = uuidBytes.map { String(format: "%02X", $0) }.joined()
                 // Data format version is the next byte
-                version = valueData[valueData.startIndex + 2]
+                version = valueData[2]
                 // Skip service UUID (2 bytes) and version (1 byte)
                 parsable = valueData.dropFirst(3)
             default:
@@ -73,7 +79,7 @@ public struct RuuviDecoderiOS: BTDecoder {
             return nil
         }
 
-        print("OMA: ", version)
+        print("OMA: ", version, parsable.count)
 
         switch version {
         case 2:
