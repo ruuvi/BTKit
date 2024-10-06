@@ -26,7 +26,7 @@ public struct RuuviDecoderiOS: BTDecoder {
 
         let parsableOffset = 5 + offsetAdjustment
         guard data.count > parsableOffset else { return nil }
-        let parsable = data[parsableOffset...]
+        let parsable = Data(data[parsableOffset...data.count - 1])
 
         print("OMA: ", version, parsable.count)
         switch version {
