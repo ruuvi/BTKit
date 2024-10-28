@@ -16,6 +16,9 @@ class BTBackgroundScanneriOS: NSObject, BTBackgroundScanner {
     private lazy var manager: CBCentralManager = {
         return CBCentralManager(delegate: self, queue: queue, options: [CBCentralManagerOptionRestoreIdentifierKey: restoreId])
     }()
+    private var supportsExtendedAdvertising: Bool {
+        return CBCentralManager.supports(CBCentralManager.Feature.extendedScanAndConnect)
+    }
     private var services: [BTService]
     private var decoders: [BTDecoder]
     private var connectedPeripherals = Set<CBPeripheral>()
@@ -893,6 +896,7 @@ extension BTBackgroundScanneriOS: CBCentralManagerDelegate {
     }
 
     func centralManager(_ central: CBCentralManager, didDiscover peripheral: CBPeripheral, advertisementData: [String: Any], rssi RSSI: NSNumber) {
+
         guard RSSI.intValue != 127 else { return }
 
         // Process observations for advertisement data
@@ -901,7 +905,8 @@ extension BTBackgroundScanneriOS: CBCentralManagerDelegate {
                 if let device = decoder.decodeAdvertisement(
                     uuid: peripheral.identifier.uuidString,
                     rssi: RSSI,
-                    advertisementData: advertisementData
+                    advertisementData: advertisementData, 
+                    supportsExtendedAdv: supportsExtendedAdvertising
                 ) {
                     observe.block(device)
                     break

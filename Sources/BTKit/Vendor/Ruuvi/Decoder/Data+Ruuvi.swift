@@ -39,6 +39,25 @@ public extension Ruuvi {
         public var mac: String
     }
 
+    struct DataE0_F0 {
+        public var humidity: Double?
+        public var temperature: Double?
+        public var pressure: Double?
+        public var pm1: Double?
+        public var pm2_5: Double?
+        public var pm4: Double?
+        public var pm10: Double?
+        public var co2: Double?
+        public var voc: Double?
+        public var nox: Double?
+        public var luminance: Double?
+        public var dbaAvg: Double?
+        public var dbaPeak: Double?
+        public var measurementSequenceNumber: Int?
+        public var voltage: Double?
+        public var mac: String
+    }
+
     struct DataC5 {
         public var humidity: Double?
         public var temperature: Double?
@@ -71,6 +90,24 @@ public extension Ruuvi {
         public var measurementSequenceNumber: Int?
         public var voltage: Double?
         public var txPower: Int?
+    }
+
+    struct HeartbeatE0_F0 {
+        public var humidity: Double?
+        public var temperature: Double?
+        public var pressure: Double?
+        public var pm1: Double?
+        public var pm2_5: Double?
+        public var pm4: Double?
+        public var pm10: Double?
+        public var co2: Double?
+        public var voc: Double?
+        public var nox: Double?
+        public var luminance: Double?
+        public var dbaAvg: Double?
+        public var dbaPeak: Double?
+        public var measurementSequenceNumber: Int?
+        public var voltage: Double?
     }
 }
 
@@ -338,6 +375,197 @@ public extension Data {
         )
     }
 
+    func ruuviF0() -> Ruuvi.DataE0_F0 {
+        // Temperature (Byte 3)
+        var temperature: Double?
+        let temperatureByte = Int8(bitPattern: self[3])
+        if temperatureByte == Int8.min {
+            temperature = nil
+        } else {
+            temperature = Double(temperatureByte) * 1.0 // Resolution 1
+        }
+
+        // Humidity (Byte 4)
+        var humidity: Double?
+        let humidityByte = self[4]
+        if humidityByte == UInt8.max {
+            humidity = nil
+        } else {
+            humidity = Double(humidityByte) * 0.5 // Resolution 0.5
+        }
+
+        // Pressure (Byte 5)
+        var pressure: Double?
+        let pressureByte = self[5]
+        if pressureByte == UInt8.max {
+            pressure = nil
+        } else {
+            pressure = Double(pressureByte) * 1.0 + 900.0 // Resolution 1 hPa, offset 900 hPa
+        }
+
+        // Logarithmic conversion function with specific scale factors
+        func convertLogarithmic(byteValue: UInt8, scale: Double) -> Double {
+            if byteValue == 0 {
+                return 0.0
+            } else {
+                let value = exp(Double(byteValue) / scale) - 1.0
+                return value
+            }
+        }
+
+        // Precompute scales
+        let scalePM = 254.0 / log(1000.0 + 1.0) // Max 1000
+        let scaleCO2 = 254.0 / log(40000.0 + 1.0) // Max 40000
+        let scaleVOCNOx = 254.0 / log(500.0 + 1.0) // Max 500
+        let scaleLumi = 254.0 / log(40000.0 + 1.0) // Max 40000
+
+        // PM1.0 to PM10 (Bytes 6-9)
+        let pm1 = self[6] == UInt8.min ? nil : convertLogarithmic(byteValue: self[6], scale: scalePM)
+        let pm2_5 = self[7] == UInt8.min ? nil : convertLogarithmic(byteValue: self[7], scale: scalePM)
+        let pm4 = self[8] == UInt8.min ? nil : convertLogarithmic(byteValue: self[8], scale: scalePM)
+        let pm10  = self[9] == UInt8.min ? nil : convertLogarithmic(byteValue: self[9], scale: scalePM)
+
+        // CO2 (Byte 10)
+        let co2 = self[10] == UInt8.min ? nil : convertLogarithmic(byteValue: self[10], scale: scaleCO2)
+
+        // VOC (Byte 11)
+        var voc: Double?
+        let vocByte = self[11]
+        if vocByte == UInt8.min {
+            voc = nil
+        } else {
+            voc = convertLogarithmic(byteValue: vocByte, scale: scaleVOCNOx)
+        }
+
+        // NOx (Byte 12)
+        var nox: Double?
+        let noxByte = self[12]
+        if noxByte == UInt8.min {
+            nox = nil
+        } else {
+            nox = convertLogarithmic(byteValue: noxByte, scale: scaleVOCNOx)
+        }
+
+        // Luminance (Byte 13)
+        var luminance: Double?
+        let lumiByte = self[13]
+        if lumiByte == UInt8.min {
+            luminance = nil
+        } else {
+            luminance = convertLogarithmic(byteValue: lumiByte, scale: scaleLumi)
+        }
+
+        // dBA Avg (Byte 14)
+        var dbaAvg: Double?
+        let dbaByte = self[14]
+        if dbaByte == UInt8.min {
+            dbaAvg = nil
+        } else {
+            dbaAvg = Double(dbaByte) * 0.5 // Resolution 0.5 dB
+        }
+
+        // MAC Address (Bytes 25-30)
+        let asStr = self.hexEncodedString()
+        let start = asStr.index(asStr.endIndex, offsetBy: -12)
+        let mac = addColons(mac: String(asStr[start...]))
+
+        return Ruuvi.DataE0_F0(
+            humidity: humidity,
+            temperature: temperature,
+            pressure: pressure,
+            pm1: pm1,
+            pm2_5: pm2_5,
+            pm4: pm4,
+            pm10: pm10,
+            co2: co2,
+            voc: voc,
+            nox: nox,
+            luminance: luminance,
+            dbaAvg: dbaAvg,
+            mac: mac
+        )
+    }
+
+    func ruuviE0() -> Ruuvi.DataE0_F0 {
+
+        // Temperature (Bytes 3-4)
+        var temperature: Double?
+        if let t = self[3...4].withUnsafeBytes({ $0.bindMemory(to: Int16.self) }).map(Int16.init(bigEndian:)).first {
+            temperature = t == Int16.min ? nil : Double(t) * 0.005
+        }
+
+        // Humidity (Bytes 5-6)
+        var humidity: Double?
+        if let h = self[5...6].withUnsafeBytes({ $0.bindMemory(to: UInt16.self) }).map(UInt16.init(bigEndian:)).first {
+            humidity = h == UInt16.max ? nil : Double(h) * 0.0025
+        }
+
+        // Pressure (Bytes 7-8)
+        var pressure: Double?
+        if let p = self[7...8].withUnsafeBytes({ $0.bindMemory(to: UInt16.self) }).map(UInt16.init(bigEndian:)).first {
+            pressure = p == UInt16.max ? nil : (Double(p) + 50000.0) / 100.0
+        }
+
+        // PM1.0 to PM10 (Bytes 9-16)
+        let pm1 = self.toUInt16(from: 9).map { $0 == UInt16.min ? nil : Double($0) * 0.1 } ?? 0
+        let pm2_5 = self.toUInt16(from: 11).map { $0 == UInt16.min ? nil : Double($0) * 0.1 } ?? 0
+        let pm4 = self.toUInt16(from: 13).map { $0 == UInt16.min ? nil : Double($0) * 0.1 } ?? 0
+        let pm10 = self.toUInt16(from: 15).map { $0 == UInt16.min ? nil : Double($0) * 0.1 } ?? 0
+
+        // CO2 (Bytes 17-18)
+        let co2 = self.toUInt16(from: 17).map { $0 == UInt16.min ? nil : Double($0) } ?? 0
+
+        // VOC (Bytes 19-20)
+        let voc = self.toUInt16(from: 19).map { $0 == UInt16.min ? nil : Double($0) } ?? 0
+
+        // NOX (Bytes 21-22)
+        let nox = self.toUInt16(from: 21).map { $0 == UInt16.min ? nil : Double($0) } ?? 0
+
+        // Luminance (Bytes 23-24)
+        let luminance = self.toUInt16(from: 23).map { $0 == UInt16.min ? nil : Double($0) } ?? 0
+
+        // dBA Avg (Byte 25)
+        var dbaAvg: Double?
+        let dbaAvgByte = self[25]
+        dbaAvg = dbaAvgByte == UInt8.min ? nil : Double(dbaAvgByte) * 0.5
+
+        // dBA Peak (Byte 26)
+        var dbaPeak: Double?
+        let dbaPeakByte = self[26]
+        dbaPeak = dbaPeakByte == UInt8.min ? nil : Double(dbaPeakByte) * 0.5
+
+        // measurementSequenceNumber (Bytes 27-28)
+        let measurementSequenceNumber = self.toUInt16(from: 27).map { $0 == UInt16.max ? nil : Int($0) } ?? 0
+
+        // Voltage (Byte 29)
+        var voltage: Double?
+        let voltageByte = self[29]
+        voltage = voltageByte == UInt8.min ? nil : Double(voltageByte) * 0.03
+
+        // MAC Address (Bytes 36-41)
+        let macBytes = self[36...41]
+        let mac = macBytes.map { String(format: "%02X", $0) }.joined(separator: ":")
+
+        return Ruuvi.DataE0_F0(
+            humidity: humidity,
+            temperature: temperature,
+            pressure: pressure,
+            pm1: pm1,
+            pm2_5: pm2_5,
+            pm4: pm4,
+            pm10: pm10,
+            co2: co2,
+            voc: voc,
+            nox: nox,
+            luminance: luminance,
+            dbaAvg: dbaAvg,
+            dbaPeak: dbaPeak,
+            measurementSequenceNumber: measurementSequenceNumber,
+            voltage: voltage,
+            mac: mac
+        )
+    }
+
     func ruuviHeartbeat5() -> Ruuvi.Heartbeat5 {
         // temperature
         var temperature: Double?
@@ -565,5 +793,26 @@ public extension Data {
             i -= 2
         }
         return out.uppercased as String
+    }
+
+    func convertLogarithmic(byteValue: UInt8, maxSensorValue: Double) -> Double {
+        // Normalize the byte value to a range between 0 and 1
+        let normalizedValue = Double(byteValue) / 255.0
+        // Apply the logarithmic scaling
+        let value = pow(10, normalizedValue * log10(maxSensorValue))
+        return value
+    }
+}
+
+extension Data {
+    // Convert a range of Data to UInt16
+    func toUInt16(from index: Int) -> UInt16? {
+        guard index + 1 < self.count else {
+            return nil
+        }
+        let highByte = self[index]
+        let lowByte = self[index + 1]
+        let value = (UInt16(highByte) << 8) | UInt16(lowByte)
+        return value
     }
 }

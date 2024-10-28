@@ -11,8 +11,8 @@ extension String {
             value = String(value[subIndex...])
 
             var char: UInt8
-            var int: UInt32 = 0
-            Scanner(string: c).scanHexInt32(&int)
+            var int: UInt64 = 0
+            Scanner(string: c).scanHexInt64(&int)
             char = UInt8(int)
             data.append(&char, count: 1)
         }
