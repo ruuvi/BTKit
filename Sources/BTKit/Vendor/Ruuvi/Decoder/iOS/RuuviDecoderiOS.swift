@@ -307,7 +307,9 @@ public struct RuuviDecoderiOS: BTDecoder {
                 return nil
 
             case 0xF0: // Handle F0(Legacy Advertisement)
-
+                if supportsExtendedAdv {
+                    return nil
+                }
                 if manufacturerData.count > 19 {
                     let ruuvi = manufacturerData.ruuviF0()
                     let tag = RuuviDataE0_F0(
