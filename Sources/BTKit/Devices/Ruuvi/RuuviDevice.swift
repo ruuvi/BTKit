@@ -269,8 +269,8 @@ public extension RuuviTag {
             return nil
         case .v5(let data):
             return data.measurementSequenceNumber
-        case .vE0_F0:
-            return nil
+        case .vE0_F0(let data):
+            return data.measurementSequenceNumber
         case .vC5(let data):
             return data.measurementSequenceNumber
         case .h5(let heartbeat):
