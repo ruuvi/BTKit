@@ -420,18 +420,18 @@ public extension Data {
         let scaleLumi = 254.0 / log(40000.0 + 1.0) // Max 40000
 
         // PM1.0 to PM10 (Bytes 6-9)
-        let pm1 = self[6] == UInt8.min ? nil : convertLogarithmic(byteValue: self[6], scale: scalePM)
-        let pm2_5 = self[7] == UInt8.min ? nil : convertLogarithmic(byteValue: self[7], scale: scalePM)
-        let pm4 = self[8] == UInt8.min ? nil : convertLogarithmic(byteValue: self[8], scale: scalePM)
-        let pm10  = self[9] == UInt8.min ? nil : convertLogarithmic(byteValue: self[9], scale: scalePM)
+        let pm1 = self[6] == UInt8.max ? nil : convertLogarithmic(byteValue: self[6], scale: scalePM)
+        let pm2_5 = self[7] == UInt8.max ? nil : convertLogarithmic(byteValue: self[7], scale: scalePM)
+        let pm4 = self[8] == UInt8.max ? nil : convertLogarithmic(byteValue: self[8], scale: scalePM)
+        let pm10  = self[9] == UInt8.max ? nil : convertLogarithmic(byteValue: self[9], scale: scalePM)
 
         // CO2 (Byte 10)
-        let co2 = self[10] == UInt8.min ? nil : convertLogarithmic(byteValue: self[10], scale: scaleCO2)
+        let co2 = self[10] == UInt8.max ? nil : convertLogarithmic(byteValue: self[10], scale: scaleCO2)
 
         // VOC (Byte 11)
         var voc: Double?
         let vocByte = self[11]
-        if vocByte == UInt8.min {
+        if vocByte == UInt8.max {
             voc = nil
         } else {
             voc = convertLogarithmic(byteValue: vocByte, scale: scaleVOCNOx)
@@ -440,7 +440,7 @@ public extension Data {
         // NOx (Byte 12)
         var nox: Double?
         let noxByte = self[12]
-        if noxByte == UInt8.min {
+        if noxByte == UInt8.max {
             nox = nil
         } else {
             nox = convertLogarithmic(byteValue: noxByte, scale: scaleVOCNOx)
@@ -449,7 +449,7 @@ public extension Data {
         // Luminance (Byte 13)
         var luminance: Double?
         let lumiByte = self[13]
-        if lumiByte == UInt8.min {
+        if lumiByte == UInt8.max {
             luminance = nil
         } else {
             luminance = convertLogarithmic(byteValue: lumiByte, scale: scaleLumi)
@@ -458,11 +458,15 @@ public extension Data {
         // dBA Avg (Byte 14)
         var dbaAvg: Double?
         let dbaByte = self[14]
-        if dbaByte == UInt8.min {
+        if dbaByte == UInt8.max {
             dbaAvg = nil
         } else {
             dbaAvg = Double(dbaByte) * 0.5 // Resolution 0.5 dB
         }
+
+        // measurementSequenceNumber Avg (Byte 15)
+        let sequenceByte = self[15]
+        let measurementSequenceNumber = Int((sequenceByte >> 4) & 0x0F)
 
         // MAC Address (Bytes 25-30)
         let asStr = self.hexEncodedString()
@@ -482,6 +486,7 @@ public extension Data {
             nox: nox,
             luminance: luminance,
             dbaAvg: dbaAvg,
+            measurementSequenceNumber: measurementSequenceNumber,
             mac: mac
         )
     }
@@ -507,32 +512,36 @@ public extension Data {
         }
 
         // PM1.0 to PM10 (Bytes 9-16)
-        let pm1 = self.toUInt16(from: 9).map { $0 == UInt16.min ? nil : Double($0) * 0.1 } ?? 0
-        let pm2_5 = self.toUInt16(from: 11).map { $0 == UInt16.min ? nil : Double($0) * 0.1 } ?? 0
-        let pm4 = self.toUInt16(from: 13).map { $0 == UInt16.min ? nil : Double($0) * 0.1 } ?? 0
-        let pm10 = self.toUInt16(from: 15).map { $0 == UInt16.min ? nil : Double($0) * 0.1 } ?? 0
+        let pm1 = self.toUInt16(from: 9).map { $0 == UInt16.max ? nil : Double($0) * 0.1 } ?? 0
+        let pm2_5 = self.toUInt16(from: 11).map { $0 == UInt16.max ? nil : Double($0) * 0.1 } ?? 0
+        let pm4 = self.toUInt16(from: 13).map { $0 == UInt16.max ? nil : Double($0) * 0.1 } ?? 0
+        let pm10 = self.toUInt16(from: 15).map { $0 == UInt16.max ? nil : Double($0) * 0.1 } ?? 0
 
         // CO2 (Bytes 17-18)
-        let co2 = self.toUInt16(from: 17).map { $0 == UInt16.min ? nil : Double($0) } ?? 0
+        let co2 = self.toUInt16(from: 17).map { $0 == UInt16.max ? nil : Double($0) } ?? 0
 
         // VOC (Bytes 19-20)
-        let voc = self.toUInt16(from: 19).map { $0 == UInt16.min ? nil : Double($0) } ?? 0
+        let voc = self.toUInt16(from: 19).map {
+            ($0 == UInt16.max || Double($0) == 511) ? nil : Double($0)
+        } ?? 0
 
         // NOX (Bytes 21-22)
-        let nox = self.toUInt16(from: 21).map { $0 == UInt16.min ? nil : Double($0) } ?? 0
+        let nox = self.toUInt16(from: 21).map {
+            ($0 == UInt16.max || Double($0) == 511) ? nil : Double($0)
+        } ?? 0
 
         // Luminance (Bytes 23-24)
-        let luminance = self.toUInt16(from: 23).map { $0 == UInt16.min ? nil : Double($0) } ?? 0
+        let luminance = self.toUInt16(from: 23).map { $0 == UInt16.max ? nil : Double($0) } ?? 0
 
         // dBA Avg (Byte 25)
         var dbaAvg: Double?
         let dbaAvgByte = self[25]
-        dbaAvg = dbaAvgByte == UInt8.min ? nil : Double(dbaAvgByte) * 0.5
+        dbaAvg = dbaAvgByte == UInt8.max ? nil : Double(dbaAvgByte) * 0.5
 
         // dBA Peak (Byte 26)
         var dbaPeak: Double?
         let dbaPeakByte = self[26]
-        dbaPeak = dbaPeakByte == UInt8.min ? nil : Double(dbaPeakByte) * 0.5
+        dbaPeak = dbaPeakByte == UInt8.max ? nil : Double(dbaPeakByte) * 0.5
 
         // measurementSequenceNumber (Bytes 27-28)
         let measurementSequenceNumber = self.toUInt16(from: 27).map { $0 == UInt16.max ? nil : Int($0) } ?? 0
@@ -540,7 +549,7 @@ public extension Data {
         // Voltage (Byte 29)
         var voltage: Double?
         let voltageByte = self[29]
-        voltage = voltageByte == UInt8.min ? nil : Double(voltageByte) * 0.03
+        voltage = voltageByte == UInt8.max ? nil : Double(voltageByte) * 0.03
 
         // MAC Address (Bytes 36-41)
         let macBytes = self[36...41]
