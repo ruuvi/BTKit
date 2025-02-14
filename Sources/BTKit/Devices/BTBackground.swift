@@ -1,4 +1,5 @@
 import Foundation
+import CoreBluetooth
 
 public struct BTBackground {
 
@@ -6,6 +7,7 @@ public struct BTBackground {
 
     let scanner: BTBackgroundScanner
         = BTBackgroundScanneriOS(services: [RuuviNUSService(),
+                                            RuuviBTBackgroundService(),
                                             DeviceInformationService()],
                                  decoders: [RuuviDecoderiOS()])
 
