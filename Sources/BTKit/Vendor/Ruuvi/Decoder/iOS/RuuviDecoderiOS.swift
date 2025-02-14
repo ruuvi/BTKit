@@ -185,7 +185,29 @@ public struct RuuviDecoderiOS: BTDecoder {
                 txPower: ruuvi.txPower
             )
             return .ruuvi(.tag(.hC5(tag)))
-
+        case 0xE0: // Handle E0
+            let ruuvi = data.ruuviHeartbeatE0()
+            let tag = RuuviHeartbeatE0_F0(
+                uuid: uuid,
+                isConnectable: isConnectable,
+                version: Int(version),
+                humidity: ruuvi.humidity,
+                temperature: ruuvi.temperature,
+                pressure: ruuvi.pressure,
+                pm1: ruuvi.pm1,
+                pm2_5: ruuvi.pm2_5,
+                pm4: ruuvi.pm4,
+                pm10: ruuvi.pm10,
+                co2: ruuvi.co2,
+                voc: ruuvi.voc,
+                nox: ruuvi.nox,
+                luminance: ruuvi.luminance,
+                dbaAvg: ruuvi.dbaAvg,
+                dbaPeak: ruuvi.dbaPeak,
+                measurementSequenceNumber: ruuvi.measurementSequenceNumber,
+                voltage: ruuvi.voltage
+            )
+            return .ruuvi(.tag(.hE0_F0(tag)))
         default:
             return nil
         }
@@ -307,10 +329,8 @@ public struct RuuviDecoderiOS: BTDecoder {
                 return nil
 
             case 0xF0: // Handle F0(Legacy Advertisement)
-                if supportsExtendedAdv {
-                    return nil
-                }
-                if manufacturerData.count > 19 {
+
+                if manufacturerData.count > 19 && manufacturerData.count < 31 {
                     let ruuvi = manufacturerData.ruuviF0()
                     let tag = RuuviDataE0_F0(
                         uuid: uuid,
@@ -330,6 +350,45 @@ public struct RuuviDecoderiOS: BTDecoder {
                         nox: ruuvi.nox,
                         luminance: ruuvi.luminance,
                         dbaAvg: ruuvi.dbaAvg,
+                        dbaPeak: ruuvi.dbaPeak,
+                        sequence: ruuvi.measurementSequenceNumber,
+                        mac: ruuvi.mac
+                    )
+                    return .ruuvi(.tag(.vE0_F0(tag)))
+                } else if manufacturerData.count > 31 {
+                    // Sometimes the manufacturer data is longer than 31 bytes
+                    // because of the extended advertisement is being merged
+                    // with the legacy advertisement.
+                    // In this case, we need to extract the E0 data from the
+                    // manufacturer data where first 20 bytes are F0 data and
+                    // the rest is E0 data.
+                    let f0Length = 20
+                    let e0Data = manufacturerData.subdata(
+                        in: f0Length..<manufacturerData.count
+                    )
+                    guard e0Data.count > 31 else { return nil }
+                    let ruuvi = e0Data.ruuviE0()
+                    let tag = RuuviDataE0_F0(
+                        uuid: uuid,
+                        serviceUUID: serviceUUID,
+                        rssi: rssi.intValue,
+                        isConnectable: isConnectable,
+                        version: Int(e0Data[2]),
+                        humidity: ruuvi.humidity,
+                        temperature: ruuvi.temperature,
+                        pressure: ruuvi.pressure,
+                        pm1: ruuvi.pm1,
+                        pm2_5: ruuvi.pm2_5,
+                        pm4: ruuvi.pm4,
+                        pm10: ruuvi.pm10,
+                        co2: ruuvi.co2,
+                        voc: ruuvi.voc,
+                        nox: ruuvi.nox,
+                        luminance: ruuvi.luminance,
+                        dbaAvg: ruuvi.dbaAvg,
+                        dbaPeak: ruuvi.dbaPeak,
+                        sequence: ruuvi.measurementSequenceNumber,
+                        voltage: ruuvi.voltage,
                         mac: ruuvi.mac
                     )
                     return .ruuvi(.tag(.vE0_F0(tag)))

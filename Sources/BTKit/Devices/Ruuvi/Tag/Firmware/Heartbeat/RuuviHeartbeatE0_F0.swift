@@ -20,8 +20,6 @@ public struct RuuviHeartbeatE0_F0 {
 
     init(
         uuid: String,
-        serviceUUID: String? = nil,
-        rssi: Int,
         isConnectable: Bool,
         version: Int,
         humidity: Double? = nil,
