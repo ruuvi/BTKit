@@ -185,7 +185,29 @@ public struct RuuviDecoderiOS: BTDecoder {
                 txPower: ruuvi.txPower
             )
             return .ruuvi(.tag(.hC5(tag)))
-
+        case 0xE0: // Handle E0
+            let ruuvi = data.ruuviHeartbeatE0()
+            let tag = RuuviHeartbeatE0_F0(
+                uuid: uuid,
+                isConnectable: isConnectable,
+                version: Int(version),
+                humidity: ruuvi.humidity,
+                temperature: ruuvi.temperature,
+                pressure: ruuvi.pressure,
+                pm1: ruuvi.pm1,
+                pm2_5: ruuvi.pm2_5,
+                pm4: ruuvi.pm4,
+                pm10: ruuvi.pm10,
+                co2: ruuvi.co2,
+                voc: ruuvi.voc,
+                nox: ruuvi.nox,
+                luminance: ruuvi.luminance,
+                dbaAvg: ruuvi.dbaAvg,
+                dbaPeak: ruuvi.dbaPeak,
+                measurementSequenceNumber: ruuvi.measurementSequenceNumber,
+                voltage: ruuvi.voltage
+            )
+            return .ruuvi(.tag(.hE0_F0(tag)))
         default:
             return nil
         }
@@ -307,9 +329,7 @@ public struct RuuviDecoderiOS: BTDecoder {
                 return nil
 
             case 0xF0: // Handle F0(Legacy Advertisement)
-                if supportsExtendedAdv {
-                    return nil
-                }
+
                 if manufacturerData.count > 19 {
                     let ruuvi = manufacturerData.ruuviF0()
                     let tag = RuuviDataE0_F0(
@@ -330,6 +350,8 @@ public struct RuuviDecoderiOS: BTDecoder {
                         nox: ruuvi.nox,
                         luminance: ruuvi.luminance,
                         dbaAvg: ruuvi.dbaAvg,
+                        dbaPeak: ruuvi.dbaPeak,
+                        sequence: ruuvi.measurementSequenceNumber,
                         mac: ruuvi.mac
                     )
                     return .ruuvi(.tag(.vE0_F0(tag)))

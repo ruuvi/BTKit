@@ -915,18 +915,41 @@ public extension RuuviTag {
         }
     }
 
-    func log<T: AnyObject>(for observer: T, from date: Date, result: @escaping (T, Result<Progressable, BTError>) -> Void) {
-        log(for: observer, from: date, options: nil, result: result)
+    func log<T: AnyObject>(
+        for observer: T,
+        from date: Date,
+        service: BTRuuviNUSService,
+        result: @escaping (T, Result<Progressable, BTError>) -> Void
+    ) {
+        log(
+            for: observer,
+            from: date,
+            service: service,
+            options: nil,
+            result: result
+        )
     }
 
-    func log<T: AnyObject>(for observer: T, from date: Date, options: BTScannerOptionsInfo?, result: @escaping (T, Result<Progressable, BTError>) -> Void) {
+    func log<T: AnyObject>(
+        for observer: T,
+        from date: Date,
+        service: BTRuuviNUSService,
+        options: BTScannerOptionsInfo?,
+        result: @escaping (T, Result<Progressable, BTError>) -> Void
+    ) {
         if !isConnectable {
             let info = BTKitParsedOptionsInfo(options)
             info.callbackQueue.execute {
                 result(observer, .failure(.logic(.notConnectable)))
             }
         } else {
-            BTKit.background.services.ruuvi.nus.log(for: observer, uuid: uuid, from: date, options: options, result: result)
+            BTKit.background.services.ruuvi.nus.log(
+                for: observer,
+                uuid: uuid,
+                from: date,
+                service: service,
+                options: options, result: result
+            )
         }
     }
 }
