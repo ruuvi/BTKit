@@ -98,7 +98,6 @@ public enum BTRuuviNUSService {
     case temperature // in °C
     case humidity // relative in %
     case pressure // in hPa
-    case e0
     case all
 
     var uuid: CBUUID {
@@ -113,8 +112,6 @@ public enum BTRuuviNUSService {
             return 0x31
         case .pressure:
             return 0x32
-        case .e0:
-            return 0x3B
         case .all:
             return 0x3A
         }
@@ -128,32 +125,25 @@ public enum BTRuuviNUSService {
             return 0.01
         case .pressure:
             return 0.01
-        case .e0:
-            return 0.01
         case .all:
             return 0.01
         }
     }
 
     func request(from date: Date) -> Data {
-        // big-endian times
-        let nowSeconds = UInt32(Date().timeIntervalSince1970).bigEndian
-        let fromSeconds = UInt32(max(0, date.timeIntervalSince1970)).bigEndian
-        let nowData = withUnsafeBytes(of: nowSeconds) { Data($0) }
-        let fromData = withUnsafeBytes(of: fromSeconds) { Data($0) }
-
+        let nowTI = Date().timeIntervalSince1970
+        var now = UInt32(nowTI)
+        now = UInt32(bigEndian: now)
+        var fromTI = date.timeIntervalSince1970
+        fromTI = fromTI < 0 ? 0 : fromTI
+        var from = UInt32(fromTI)
+        from = UInt32(bigEndian: from)
+        let nowData = withUnsafeBytes(of: now) { Data($0) }
+        let fromData = withUnsafeBytes(of: from) { Data($0) }
         var data = Data()
         data.append(flag)
-
-        switch self {
-        case .e0:
-            data.append(0x00)
-            data.append(0x21)
-        default:
-            data.append(0x30)
-            data.append(0x11)
-        }
-
+        data.append(0x30)
+        data.append(0x11)
         data.append(nowData)
         data.append(fromData)
         return data
@@ -206,36 +196,6 @@ public enum BTRuuviNUSService {
         let bytesCopied = withUnsafeMutableBytes(of: &value, { payload.copyBytes(to: $0)})
         assert(bytesCopied == MemoryLayout.size(ofValue: value))
         return value == UInt64.max
-    }
-
-    func responseE0(_ data: Data) -> ([RuuviTagEnvLogFull], Bool)? {
-        guard data.count >= 5 else { return nil }
-        // Byte1 = src (0x3B), Byte2 = op (0x20), Byte3 = numRecords, Byte4 = recordLen
-        let src   = data[1]
-        let op    = data[2]
-        let count = data[3]       // numRecords
-        let len   = data[4]       // recordLen
-        if src != 0x3B || (op != 0x20 && op != 0x10) {
-            return nil
-        }
-        if count == 0 {
-            // Means no more records => end
-            return ([], true)
-        }
-        // Each record is len bytes
-        let neededSize = 5 + Int(count) * Int(len)
-        guard data.count >= neededSize else { return nil }
-
-        var records = [RuuviTagEnvLogFull]()
-        var offset = 5
-        for _ in 0..<count {
-            let chunk = data.subdata(in: offset..<(offset + Int(len)))
-            offset += Int(len)
-            if let rec = chunk.ruuviLogE0() {
-                records.append(rec)
-            }
-        }
-        return (records, false)
     }
 }
 
@@ -411,15 +371,7 @@ public struct BTKitRuuviNUSService {
         serve(.pressure, for: observer, uuid: uuid, from: date, options: options, result: result)
     }
 
-    public func log<T: AnyObject>(
-        for observer: T,
-        uuid: String,
-        from date: Date,
-        service: BTRuuviNUSService,
-        options: BTScannerOptionsInfo? = nil,
-        progress: ((BTServiceProgress) -> Void)? = nil,
-        result: @escaping (T, Result<Progressable, BTError>
-        ) -> Void) {
+    public func log<T: AnyObject>(for observer: T, uuid: String, from date: Date, options: BTScannerOptionsInfo? = nil, progress: ((BTServiceProgress) -> Void)? = nil, result: @escaping (T, Result<Progressable, BTError>) -> Void) {
         var connectToken: ObservationToken?
         progress?(.connecting)
         connectToken = BTKit.background.connect(for: observer, uuid: uuid, options: options, connected: { (observer, connectResult) in
@@ -428,9 +380,7 @@ public struct BTKitRuuviNUSService {
             case .already:
                 var serveToken: ObservationToken?
                 progress?(.serving)
-                serveToken = self.serveLogs(
-                    observer, uuid, service, options, date
-                ) { observer, serveResult in
+                serveToken = self.serveLogs(observer, uuid, options, date) { observer, serveResult in
                     var disconnectToken: ObservationToken?
                     switch serveResult {
                     case .success(.points(let points)):
@@ -467,9 +417,7 @@ public struct BTKitRuuviNUSService {
             case .just:
                 var serveToken: ObservationToken?
                 progress?(.serving)
-                serveToken = self.serveLogs(
-                    observer, uuid, service, options, date
-                ) { observer, serveResult in
+                serveToken = self.serveLogs(observer, uuid, options, date) { observer, serveResult in
                     switch serveResult {
                     case .success(.points(let points)):
                         progress?(.reading(points))
@@ -511,22 +459,12 @@ public struct BTKitRuuviNUSService {
         })
     }
 
-    private func serveLogs<T: AnyObject>(
-        _ observer: T,
-        _ uuid: String,
-        _ service: BTRuuviNUSService,
-        _ options: BTScannerOptionsInfo?,
-        _ date: Date,
-        _ result: @escaping (T, Result<Progressable, BTError>) -> Void
-    ) -> ObservationToken? {
+    private func serveLogs<T: AnyObject>(_ observer: T, _ uuid: String, _ options: BTScannerOptionsInfo?, _ date: Date, _ result: @escaping (T, Result<Progressable, BTError>) -> Void) -> ObservationToken? {
         let info = BTKitParsedOptionsInfo(options)
         var values = [RuuviTagEnvLogFull]()
         var lastValue = RuuviTagEnvLogFullClass()
-        let serveToken = BTKit.background.scanner.serveUART(
-            observer,
-            for: uuid, .ruuvi(.nus(service)),
-            options: options,
-            request: { (observer, peripheral, rx, _) in
+        let service: BTRuuviNUSService = .all
+        let serveToken = BTKit.background.scanner.serveUART(observer, for: uuid, .ruuvi(.nus(service)), options: options, request: { (observer, peripheral, rx, _) in
             if let rx = rx {
                 peripheral?.writeValue(service.request(from: date), for: rx, type: .withResponse)
             } else {
@@ -536,52 +474,31 @@ public struct BTKitRuuviNUSService {
             }
         }, response: { (observer, data, finished) in
             if let data = data {
-                switch service {
-                case .e0:
-                    if let (records, done) = service.responseE0(data) {
-                        values.append(contentsOf: records)
-                        if !records.isEmpty {
-                            result(observer, .success(.points(values.count)))
-                        }
-                        if done {
-                            finished?(true)
-                            info.callbackQueue.execute {
-                                result(observer, .success(.logs(values)))
-                            }
-                        }
-                    } else {
-                        info.callbackQueue.execute {
-                            result(observer, .failure(.unexpected(.dataIsNil)))
-                        }
+                if service.isEndOfTransmissionFlag(data: data) {
+                    finished?(true)
+                    info.callbackQueue.execute {
+                        result(observer, .success(.logs(values)))
                     }
-                default:
-                    if service.isEndOfTransmissionFlag(data: data) {
-                        finished?(true)
-                        info.callbackQueue.execute {
-                            result(observer, .success(.logs(values)))
-                        }
-                    } else if let row = service.responseRow(from: data) {
-                        switch row.1 {
-                        case .temperature:
-                            lastValue.temperature = row.2
-                        case .humidity:
-                            lastValue.humidity = row.2
-                        case .pressure:
-                            lastValue.pressure = row.2
-                        case .all, .e0:
-                            break
-                        }
-                        if let t = lastValue.temperature,
-                            let h = lastValue.humidity,
-                            let p = lastValue.pressure {
-                            let log = RuuviTagEnvLogFull(date: row.0, temperature: t, humidity: h, pressure: p)
-                            values.append(log)
-                            lastValue = RuuviTagEnvLogFullClass()
-                            result(observer, .success(.points(values.count)))
-                        }
+                } else if let row = service.responseRow(from: data) {
+                    switch row.1 {
+                    case .temperature:
+                        lastValue.temperature = row.2
+                    case .humidity:
+                        lastValue.humidity = row.2
+                    case .pressure:
+                        lastValue.pressure = row.2
+                    case .all:
+                        break
+                    }
+                    if let t = lastValue.temperature,
+                        let h = lastValue.humidity,
+                        let p = lastValue.pressure {
+                        let log = RuuviTagEnvLogFull(date: row.0, temperature: t, humidity: h, pressure: p)
+                        values.append(log)
+                        lastValue = RuuviTagEnvLogFullClass()
+                        result(observer, .success(.points(values.count)))
                     }
                 }
-
             } else {
                 info.callbackQueue.execute {
                     result(observer, .failure(.unexpected(.dataIsNil)))
@@ -730,22 +647,9 @@ public struct RuuviTagEnvLog {
 
 public struct RuuviTagEnvLogFull {
     public var date: Date
-    public var temperature: Double? // in °C
-    public var humidity: Double? // relative in %
-    public var pressure: Double? // in hPa
-
-    // E0-specific fields
-    public var pm1: Double?
-    public var pm25: Double?
-    public var pm4: Double?
-    public var pm10: Double?
-    public var co2: Double?
-    public var voc: Double?
-    public var nox: Double?
-    public var luminosity: Double?
-    public var soundAvg: Double?
-    public var soundPeak: Double?
-    public var batteryVoltage: Double?
+    public var temperature: Double // in °C
+    public var humidity: Double // relative in %
+    public var pressure: Double // in hPa
 }
 
 class RuuviTagEnvLogFullClass {
@@ -753,17 +657,4 @@ class RuuviTagEnvLogFullClass {
     var temperature: Double? // in °C
     var humidity: Double? // relative in %
     var pressure: Double? // in hPa
-
-    // E0-specific fields
-    var pm1: Double?
-    var pm25: Double?
-    var pm4: Double?
-    var pm10: Double?
-    var co2: Double?
-    var voc: Double?
-    var nox: Double?
-    var luminosity: Double?
-    var soundAvg: Double?
-    var soundPeak: Double?
-    var batteryVoltage: Double?
 }
