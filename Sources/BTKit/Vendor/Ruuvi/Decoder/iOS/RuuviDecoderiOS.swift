@@ -1,6 +1,11 @@
 import CoreBluetooth
 
-public struct RuuviDecoderiOS: BTDecoder {
+public class RuuviDecoderiOS: BTDecoder {
+
+    /// Property to track which format to return when the adverstisement data contains both E0 and F0 data.
+    /// Currently we return measurement alternating between E0 and F0 data.
+    /// For example one E0 advertisement is followed by one F0 advertisement, and vice versa.
+    private var shouldReturnF0 = true
 
     public init() {
     }
@@ -355,44 +360,95 @@ public struct RuuviDecoderiOS: BTDecoder {
                         mac: ruuvi.mac
                     )
                     return .ruuvi(.tag(.vE0_F0(tag)))
+
                 } else if manufacturerData.count > 31 {
-                    // Sometimes the manufacturer data is longer than 31 bytes
-                    // because of the extended advertisement is being merged
-                    // with the legacy advertisement.
-                    // In this case, we need to extract the E0 data from the
-                    // manufacturer data where first 20 bytes are F0 data and
-                    // the rest is E0 data.
-                    let f0Length = 20
-                    let e0Data = manufacturerData.subdata(
-                        in: f0Length..<manufacturerData.count
-                    )
-                    guard e0Data.count > 31 else { return nil }
-                    let ruuvi = e0Data.ruuviE0()
-                    let tag = RuuviDataE0_F0(
+                    // Merged Legacy + Extended advertisement:
+                    // The same manufacturerData block contains F0 portion + E0 portion.
+                    // Therefore we will split the data into two parts and return them alternately.
+
+                    // First 22 bytes => F0 data
+                    let f0Length = 22
+                    let f0Data = manufacturerData.prefix(f0Length)
+                    let ruuviF0 = f0Data.ruuviF0()
+
+                    let tagF0 = RuuviDataE0_F0(
                         uuid: uuid,
                         serviceUUID: serviceUUID,
                         rssi: rssi.intValue,
                         isConnectable: isConnectable,
-                        version: Int(e0Data[2]),
-                        humidity: ruuvi.humidity,
-                        temperature: ruuvi.temperature,
-                        pressure: ruuvi.pressure,
-                        pm1: ruuvi.pm1,
-                        pm2_5: ruuvi.pm2_5,
-                        pm4: ruuvi.pm4,
-                        pm10: ruuvi.pm10,
-                        co2: ruuvi.co2,
-                        voc: ruuvi.voc,
-                        nox: ruuvi.nox,
-                        luminance: ruuvi.luminance,
-                        dbaAvg: ruuvi.dbaAvg,
-                        dbaPeak: ruuvi.dbaPeak,
-                        sequence: ruuvi.measurementSequenceNumber,
-                        voltage: ruuvi.voltage,
-                        mac: ruuvi.mac
+                        version: Int(version),
+                        humidity: ruuviF0.humidity,
+                        temperature: ruuviF0.temperature,
+                        pressure: ruuviF0.pressure,
+                        pm1: ruuviF0.pm1,
+                        pm2_5: ruuviF0.pm2_5,
+                        pm4: ruuviF0.pm4,
+                        pm10: ruuviF0.pm10,
+                        co2: ruuviF0.co2,
+                        voc: ruuviF0.voc,
+                        nox: ruuviF0.nox,
+                        luminance: ruuviF0.luminance,
+                        dbaAvg: ruuviF0.dbaAvg,
+                        dbaPeak: ruuviF0.dbaPeak,
+                        sequence: ruuviF0.measurementSequenceNumber,
+                        mac: ruuviF0.mac
                     )
-                    return .ruuvi(.tag(.vE0_F0(tag)))
+
+                    // Remaining data => E0 portion
+                    let e0Data = manufacturerData.subdata(in: f0Length..<manufacturerData.count)
+
+                    // If E0 portion is invalid, fallback to returning F0
+                    if e0Data.count <= 31 {
+                        return .ruuvi(.tag(.vE0_F0(tagF0)))
+                    }
+
+                    // Build "completeE0Data" by reusing the 2-byte (0x99, 0x04) header
+                    var completeE0Data = Data()
+                    // Add the 2-byte header from the original manufacturerData
+                    // We need this to build the complete E0 data that will be used to
+                    // pass to the ruuviE0() method which requires the header.
+                    completeE0Data.append(manufacturerData.prefix(2))
+                    // Then append the leftover E0 bytes
+                    completeE0Data.append(e0Data)
+
+                    let ruuviE0 = completeE0Data.ruuviE0()
+                    let tagE0 = RuuviDataE0_F0(
+                        uuid: uuid,
+                        serviceUUID: serviceUUID,
+                        rssi: rssi.intValue,
+                        isConnectable: isConnectable,
+                        version: Int(e0Data[0]), // read from E0 portion
+                        humidity: ruuviE0.humidity,
+                        temperature: ruuviE0.temperature,
+                        pressure: ruuviE0.pressure,
+                        pm1: ruuviE0.pm1,
+                        pm2_5: ruuviE0.pm2_5,
+                        pm4: ruuviE0.pm4,
+                        pm10: ruuviE0.pm10,
+                        co2: ruuviE0.co2,
+                        voc: ruuviE0.voc,
+                        nox: ruuviE0.nox,
+                        luminance: ruuviE0.luminance,
+                        dbaAvg: ruuviE0.dbaAvg,
+                        dbaPeak: ruuviE0.dbaPeak,
+                        sequence: ruuviE0.measurementSequenceNumber,
+                        voltage: ruuviE0.voltage,
+                        mac: ruuviE0.mac
+                    )
+
+                    // Alternate returns between F0 & E0:
+                    // This ensures that scanning yields both older (F0) data and newer extended data.
+                    // Next time we see a merged packet, we flip the boolean.
+                    if shouldReturnF0 {
+                        shouldReturnF0 = false
+                        return .ruuvi(.tag(.vE0_F0(tagF0)))
+                    } else {
+                        shouldReturnF0 = true
+                        return .ruuvi(.tag(.vE0_F0(tagE0)))
+                    }
                 }
+
+                // Otherwise, no recognized data
                 return nil
 
             case 0xC5:  // Handle version C5
