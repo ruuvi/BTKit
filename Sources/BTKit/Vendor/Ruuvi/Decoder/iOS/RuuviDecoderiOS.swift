@@ -1,11 +1,6 @@
 import CoreBluetooth
 
-public class RuuviDecoderiOS: BTDecoder {
-
-    /// Property to track which format to return when the adverstisement data contains both E0 and F0 data.
-    /// Currently we return measurement alternating between E0 and F0 data.
-    /// For example one E0 advertisement is followed by one F0 advertisement, and vice versa.
-    private var shouldReturnF0 = true
+public struct RuuviDecoderiOS: BTDecoder {
 
     public init() {
     }
@@ -335,7 +330,7 @@ public class RuuviDecoderiOS: BTDecoder {
 
             case 0xF0: // Handle F0(Legacy Advertisement)
 
-                if manufacturerData.count > 19 && manufacturerData.count < 31 {
+                if !supportsExtendedAdv && manufacturerData.count > 19 && manufacturerData.count < 31 {
                     let ruuvi = manufacturerData.ruuviF0()
                     let tag = RuuviDataE0_F0(
                         uuid: uuid,
@@ -364,7 +359,8 @@ public class RuuviDecoderiOS: BTDecoder {
                 } else if manufacturerData.count > 31 {
                     // Merged Legacy + Extended advertisement:
                     // The same manufacturerData block contains F0 portion + E0 portion.
-                    // Therefore we will split the data into two parts and return them alternately.
+                    // Therefore we will split the data into two parts and return them based on device
+                    // extended adv scan capabilities.
 
                     // First 22 bytes => F0 data
                     let f0Length = 22
@@ -436,15 +432,10 @@ public class RuuviDecoderiOS: BTDecoder {
                         mac: ruuviE0.mac
                     )
 
-                    // Alternate returns between F0 & E0:
-                    // This ensures that scanning yields both older (F0) data and newer extended data.
-                    // Next time we see a merged packet, we flip the boolean.
-                    if shouldReturnF0 {
-                        shouldReturnF0 = false
-                        return .ruuvi(.tag(.vE0_F0(tagF0)))
-                    } else {
-                        shouldReturnF0 = true
+                    if supportsExtendedAdv {
                         return .ruuvi(.tag(.vE0_F0(tagE0)))
+                    } else {
+                        return .ruuvi(.tag(.vE0_F0(tagF0)))
                     }
                 }
 
