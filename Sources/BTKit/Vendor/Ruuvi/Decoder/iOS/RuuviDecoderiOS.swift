@@ -296,38 +296,6 @@ public struct RuuviDecoderiOS: BTDecoder {
                 )
                 return .ruuvi(.tag(.v5(tag)))
 
-            case 0xE0: // // Handle E0(Advertising Extension)
-
-                if supportsExtendedAdv && manufacturerData.count > 31 {
-                    let ruuvi = manufacturerData.ruuviE0()
-                    let tag = RuuviDataE0_F0(
-                        uuid: uuid,
-                        serviceUUID: serviceUUID,
-                        rssi: rssi.intValue,
-                        isConnectable: isConnectable,
-                        version: Int(version),
-                        humidity: ruuvi.humidity,
-                        temperature: ruuvi.temperature,
-                        pressure: ruuvi.pressure,
-                        pm1: ruuvi.pm1,
-                        pm2_5: ruuvi.pm2_5,
-                        pm4: ruuvi.pm4,
-                        pm10: ruuvi.pm10,
-                        co2: ruuvi.co2,
-                        voc: ruuvi.voc,
-                        nox: ruuvi.nox,
-                        luminance: ruuvi.luminance,
-                        dbaAvg: ruuvi.dbaAvg,
-                        dbaPeak: ruuvi.dbaPeak,
-                        sequence: ruuvi.measurementSequenceNumber,
-                        voltage: ruuvi.voltage,
-                        mac: ruuvi.mac
-                    )
-                    return .ruuvi(.tag(.vE0_F0(tag)))
-                }
-
-                return nil
-
             case 0xF0: // Handle F0(Legacy Advertisement)
 
                 if !supportsExtendedAdv && manufacturerData.count > 19 && manufacturerData.count < 31 {
@@ -394,7 +362,7 @@ public struct RuuviDecoderiOS: BTDecoder {
                     let e0Data = manufacturerData.subdata(in: f0Length..<manufacturerData.count)
 
                     // If E0 portion is invalid, fallback to returning F0
-                    if e0Data.count <= 31 {
+                    if e0Data.count <= 31 && supportsExtendedAdv {
                         return .ruuvi(.tag(.vE0_F0(tagF0)))
                     }
 
