@@ -19,6 +19,7 @@ public protocol BTDecoder {
         uuid: String,
         rssi: NSNumber,
         advertisementData: [String: Any],
+        isConnected: Bool,
         supportsExtendedAdv: Bool
     ) -> BTDevice?
 }
