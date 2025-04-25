@@ -1,6 +1,8 @@
 import CoreBluetooth
 
-public struct RuuviDecoderiOS: BTDecoder {
+public class RuuviDecoderiOS: BTDecoder {
+
+    private let deviceRegistry = RuuviDeviceRegistry()
 
     public init() {
     }
@@ -217,6 +219,7 @@ public struct RuuviDecoderiOS: BTDecoder {
         uuid: String,
         rssi: NSNumber,
         advertisementData: [String: Any],
+        isConnected: Bool,
         supportsExtendedAdv: Bool
     ) -> BTDevice? {
         if let manufacturerDictionary = advertisementData[CBAdvertisementDataServiceDataKey] as? [NSObject: AnyObject],
@@ -296,10 +299,45 @@ public struct RuuviDecoderiOS: BTDecoder {
                 )
                 return .ruuvi(.tag(.v5(tag)))
 
+            case 0xE0: // Handle E0(Advertising Extension)
+                if supportsExtendedAdv && manufacturerData.count > 31 {
+                    let ruuvi = manufacturerData.ruuviE0()
+
+                    // Check if we have a legacy UUID for this MAC
+                    if let deviceUUID = deviceRegistry.getLegacyUUID(for: ruuvi.mac) {
+                        let tag = RuuviDataE0_F0(
+                            uuid: deviceUUID,
+                            serviceUUID: serviceUUID,
+                            rssi: rssi.intValue,
+                            isConnectable: isConnectable,
+                            version: Int(version),
+                            humidity: ruuvi.humidity,
+                            temperature: ruuvi.temperature,
+                            pressure: ruuvi.pressure,
+                            pm1: ruuvi.pm1,
+                            pm2_5: ruuvi.pm2_5,
+                            pm4: ruuvi.pm4,
+                            pm10: ruuvi.pm10,
+                            co2: ruuvi.co2,
+                            voc: ruuvi.voc,
+                            nox: ruuvi.nox,
+                            luminance: ruuvi.luminance,
+                            dbaAvg: ruuvi.dbaAvg,
+                            dbaPeak: ruuvi.dbaPeak,
+                            sequence: ruuvi.measurementSequenceNumber,
+                            voltage: ruuvi.voltage,
+                            mac: ruuvi.mac
+                        )
+                        return .ruuvi(.tag(.vE0_F0(tag)))
+                    }
+                    return nil
+                }
+                return nil
             case 0xF0: // Handle F0(Legacy Advertisement)
 
-                if !supportsExtendedAdv && manufacturerData.count > 19 && manufacturerData.count < 31 {
+                if manufacturerData.count > 19 && manufacturerData.count < 31 {
                     let ruuvi = manufacturerData.ruuviF0()
+                    deviceRegistry.registerLegacyUUID(mac: ruuvi.mac, uuid: uuid)
                     let tag = RuuviDataE0_F0(
                         uuid: uuid,
                         serviceUUID: serviceUUID,
@@ -322,7 +360,8 @@ public struct RuuviDecoderiOS: BTDecoder {
                         sequence: ruuvi.measurementSequenceNumber,
                         mac: ruuvi.mac
                     )
-                    return .ruuvi(.tag(.vE0_F0(tag)))
+
+                    return !supportsExtendedAdv ? .ruuvi(.tag(.vE0_F0(tag))) : nil
 
                 } else if manufacturerData.count > 31 {
                     // Merged Legacy + Extended advertisement:
@@ -339,7 +378,7 @@ public struct RuuviDecoderiOS: BTDecoder {
                         uuid: uuid,
                         serviceUUID: serviceUUID,
                         rssi: rssi.intValue,
-                        isConnectable: isConnectable,
+                        isConnectable: isConnectable && !isConnected,
                         version: Int(version),
                         humidity: ruuviF0.humidity,
                         temperature: ruuviF0.temperature,
@@ -357,12 +396,13 @@ public struct RuuviDecoderiOS: BTDecoder {
                         sequence: ruuviF0.measurementSequenceNumber,
                         mac: ruuviF0.mac
                     )
+                    deviceRegistry.registerLegacyUUID(mac: tagF0.mac, uuid: uuid)
 
                     // Remaining data => E0 portion
                     let e0Data = manufacturerData.subdata(in: f0Length..<manufacturerData.count)
 
                     // If E0 portion is invalid, fallback to returning F0
-                    if e0Data.count <= 31 && supportsExtendedAdv {
+                    if e0Data.count <= 31 && !supportsExtendedAdv {
                         return .ruuvi(.tag(.vE0_F0(tagF0)))
                     }
 
@@ -380,7 +420,7 @@ public struct RuuviDecoderiOS: BTDecoder {
                         uuid: uuid,
                         serviceUUID: serviceUUID,
                         rssi: rssi.intValue,
-                        isConnectable: isConnectable,
+                        isConnectable: isConnectable && !isConnected,
                         version: Int(e0Data[0]), // read from E0 portion
                         humidity: ruuviE0.humidity,
                         temperature: ruuviE0.temperature,
@@ -400,7 +440,7 @@ public struct RuuviDecoderiOS: BTDecoder {
                         mac: ruuviE0.mac
                     )
 
-                    if supportsExtendedAdv {
+                    if supportsExtendedAdv && !isConnected {
                         return .ruuvi(.tag(.vE0_F0(tagE0)))
                     } else {
                         return .ruuvi(.tag(.vE0_F0(tagF0)))
@@ -553,5 +593,25 @@ extension Data {
             index = nextIndex
         }
         self = data
+    }
+}
+
+class RuuviDeviceRegistry {
+    // Map from MAC address to the UUID from legacy (F0) advertisements
+    private var macToLegacyUUID: [String: String] = [:]
+
+    // Store the F0 UUID for a given MAC address
+    func registerLegacyUUID(mac: String, uuid: String) {
+        macToLegacyUUID[mac] = uuid
+    }
+
+    // Get the F0 UUID for a given MAC address
+    func getLegacyUUID(for mac: String) -> String? {
+        return macToLegacyUUID[mac]
+    }
+
+    // Check if we have a registered F0 UUID for this MAC
+    func hasLegacyUUID(for mac: String) -> Bool {
+        return macToLegacyUUID[mac] != nil
     }
 }

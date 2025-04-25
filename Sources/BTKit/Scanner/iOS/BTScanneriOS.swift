@@ -182,6 +182,7 @@ extension BTScanneriOS: CBCentralManagerDelegate {
                 uuid: uuid,
                 rssi: RSSI,
                 advertisementData: advertisementData,
+                isConnected: false,
                 supportsExtendedAdv: supportsExtendedAdvertising
             ) {
                 observations.device.values.forEach { (closure) in

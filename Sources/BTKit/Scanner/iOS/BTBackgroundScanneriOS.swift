@@ -905,7 +905,8 @@ extension BTBackgroundScanneriOS: CBCentralManagerDelegate {
                 if let device = decoder.decodeAdvertisement(
                     uuid: peripheral.identifier.uuidString,
                     rssi: RSSI,
-                    advertisementData: advertisementData, 
+                    advertisementData: advertisementData,
+                    isConnected: isConnected(uuid: peripheral.identifier.uuidString), 
                     supportsExtendedAdv: supportsExtendedAdvertising
                 ) {
                     observe.block(device)
