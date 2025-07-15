@@ -98,7 +98,7 @@ public enum BTRuuviNUSService {
     case temperature // in °C
     case humidity // relative in %
     case pressure // in hPa
-    case e0
+    case e1
     case all
 
     var uuid: CBUUID {
@@ -113,7 +113,7 @@ public enum BTRuuviNUSService {
             return 0x31
         case .pressure:
             return 0x32
-        case .e0:
+        case .e1:
             return 0x3B
         case .all:
             return 0x3A
@@ -128,7 +128,7 @@ public enum BTRuuviNUSService {
             return 0.01
         case .pressure:
             return 0.01
-        case .e0:
+        case .e1:
             return 0.01
         case .all:
             return 0.01
@@ -146,7 +146,7 @@ public enum BTRuuviNUSService {
         data.append(flag)
 
         switch self {
-        case .e0:
+        case .e1:
             data.append(0x00)
             data.append(0x21)
         default:
@@ -208,7 +208,7 @@ public enum BTRuuviNUSService {
         return value == UInt64.max
     }
 
-    func responseE0(_ data: Data) -> ([RuuviTagEnvLogFull], Bool)? {
+    func responseE1(_ data: Data) -> ([RuuviTagEnvLogFull], Bool)? {
         guard data.count >= 5 else { return nil }
         // Byte1 = src (0x3B), Byte2 = op (0x20), Byte3 = numRecords, Byte4 = recordLen
         let src   = data[1]
@@ -231,7 +231,7 @@ public enum BTRuuviNUSService {
         for _ in 0..<count {
             let chunk = data.subdata(in: offset..<(offset + Int(len)))
             offset += Int(len)
-            if let rec = chunk.ruuviLogE0() {
+            if let rec = chunk.ruuviLogE1() {
                 records.append(rec)
             }
         }
@@ -537,8 +537,8 @@ public struct BTKitRuuviNUSService {
         }, response: { (observer, data, finished) in
             if let data = data {
                 switch service {
-                case .e0:
-                    if let (records, done) = service.responseE0(data) {
+                case .e1:
+                    if let (records, done) = service.responseE1(data) {
                         values.append(contentsOf: records)
                         if !records.isEmpty {
                             result(observer, .success(.points(values.count)))
@@ -568,7 +568,7 @@ public struct BTKitRuuviNUSService {
                             lastValue.humidity = row.2
                         case .pressure:
                             lastValue.pressure = row.2
-                        case .all, .e0:
+                        case .all, .e1:
                             break
                         }
                         if let t = lastValue.temperature,
@@ -734,7 +734,7 @@ public struct RuuviTagEnvLogFull {
     public var humidity: Double? // relative in %
     public var pressure: Double? // in hPa
 
-    // E0-specific fields
+    // E1-specific fields
     public var pm1: Double?
     public var pm25: Double?
     public var pm4: Double?
@@ -743,6 +743,7 @@ public struct RuuviTagEnvLogFull {
     public var voc: Double?
     public var nox: Double?
     public var luminosity: Double?
+    public var soundInstant: Double?
     public var soundAvg: Double?
     public var soundPeak: Double?
     public var batteryVoltage: Double?
@@ -754,7 +755,7 @@ class RuuviTagEnvLogFullClass {
     var humidity: Double? // relative in %
     var pressure: Double? // in hPa
 
-    // E0-specific fields
+    // E1-specific fields
     var pm1: Double?
     var pm25: Double?
     var pm4: Double?
@@ -763,6 +764,7 @@ class RuuviTagEnvLogFullClass {
     var voc: Double?
     var nox: Double?
     var luminosity: Double?
+    var soundInstant: Double?
     var soundAvg: Double?
     var soundPeak: Double?
     var batteryVoltage: Double?
