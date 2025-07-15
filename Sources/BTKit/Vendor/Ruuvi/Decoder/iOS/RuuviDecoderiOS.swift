@@ -91,10 +91,10 @@ public class RuuviDecoderiOS: BTDecoder {
                 mac: ruuvi.mac
             )
             return .ruuvi(.tag(.n5(tag)))
-        case 0xE0: // Handle Version 6 Extended Advertising Extension
+        case 0xE1: // Handle Version 6 Extended Advertising Extension
             if parsable.count > 31 {
-                let ruuvi = parsable.ruuviE0()
-                let tag = RuuviDataE0_F0(
+                let ruuvi = parsable.ruuviE1()
+                let tag = RuuviDataE1_V6(
                     uuid: uuid,
                     serviceUUID: serviceUUID.first,
                     rssi: rssi,
@@ -104,20 +104,20 @@ public class RuuviDecoderiOS: BTDecoder {
                     temperature: ruuvi.temperature,
                     pressure: ruuvi.pressure,
                     pm1: ruuvi.pm1,
-                    pm2_5: ruuvi.pm2_5,
+                    pm25: ruuvi.pm25,
                     pm4: ruuvi.pm4,
                     pm10: ruuvi.pm10,
                     co2: ruuvi.co2,
                     voc: ruuvi.voc,
                     nox: ruuvi.nox,
                     luminance: ruuvi.luminance,
+                    dbaInstant: ruuvi.dbaInstant,
                     dbaAvg: ruuvi.dbaAvg,
                     dbaPeak: ruuvi.dbaPeak,
                     sequence: ruuvi.measurementSequenceNumber,
-                    voltage: ruuvi.voltage,
                     mac: ruuvi.mac
                 )
-                return .ruuvi(.tag(.nE0_F0(tag)))
+                return .ruuvi(.tag(.nE1_V6(tag)))
             }
             return nil
         case 0xC5: // Handle version C5
@@ -187,9 +187,9 @@ public class RuuviDecoderiOS: BTDecoder {
                 txPower: ruuvi.txPower
             )
             return .ruuvi(.tag(.hC5(tag)))
-        case 0xE0: // Handle E0
-            let ruuvi = data.ruuviHeartbeatE0()
-            let tag = RuuviHeartbeatE0_F0(
+        case 0xE1: // Handle E1
+            let ruuvi = data.ruuviHeartbeatE1()
+            let tag = RuuviHeartbeatE1_V6(
                 uuid: uuid,
                 isConnectable: isConnectable,
                 version: Int(version),
@@ -197,19 +197,19 @@ public class RuuviDecoderiOS: BTDecoder {
                 temperature: ruuvi.temperature,
                 pressure: ruuvi.pressure,
                 pm1: ruuvi.pm1,
-                pm2_5: ruuvi.pm2_5,
+                pm25: ruuvi.pm25,
                 pm4: ruuvi.pm4,
                 pm10: ruuvi.pm10,
                 co2: ruuvi.co2,
                 voc: ruuvi.voc,
                 nox: ruuvi.nox,
                 luminance: ruuvi.luminance,
+                dbaInstant: ruuvi.dbaInstant,
                 dbaAvg: ruuvi.dbaAvg,
                 dbaPeak: ruuvi.dbaPeak,
-                measurementSequenceNumber: ruuvi.measurementSequenceNumber,
-                voltage: ruuvi.voltage
+                measurementSequenceNumber: ruuvi.measurementSequenceNumber
             )
-            return .ruuvi(.tag(.hE0_F0(tag)))
+            return .ruuvi(.tag(.hE1_V6(tag)))
         default:
             return nil
         }
@@ -299,13 +299,13 @@ public class RuuviDecoderiOS: BTDecoder {
                 )
                 return .ruuvi(.tag(.v5(tag)))
 
-            case 0xE0: // Handle E0(Advertising Extension)
+            case 0xE1: // Handle E1(Advertising Extension)
                 if supportsExtendedAdv && manufacturerData.count > 31 {
-                    let ruuvi = manufacturerData.ruuviE0()
+                    let ruuvi = manufacturerData.ruuviE1()
 
                     // Check if we have a legacy UUID for this MAC
                     if let deviceUUID = deviceRegistry.getLegacyUUID(for: ruuvi.mac) {
-                        let tag = RuuviDataE0_F0(
+                        let tag = RuuviDataE1_V6(
                             uuid: deviceUUID,
                             serviceUUID: serviceUUID,
                             rssi: rssi.intValue,
@@ -315,30 +315,30 @@ public class RuuviDecoderiOS: BTDecoder {
                             temperature: ruuvi.temperature,
                             pressure: ruuvi.pressure,
                             pm1: ruuvi.pm1,
-                            pm2_5: ruuvi.pm2_5,
+                            pm25: ruuvi.pm25,
                             pm4: ruuvi.pm4,
                             pm10: ruuvi.pm10,
                             co2: ruuvi.co2,
                             voc: ruuvi.voc,
                             nox: ruuvi.nox,
                             luminance: ruuvi.luminance,
+                            dbaInstant: ruuvi.dbaInstant,
                             dbaAvg: ruuvi.dbaAvg,
                             dbaPeak: ruuvi.dbaPeak,
                             sequence: ruuvi.measurementSequenceNumber,
-                            voltage: ruuvi.voltage,
                             mac: ruuvi.mac
                         )
-                        return .ruuvi(.tag(.vE0_F0(tag)))
+                        return .ruuvi(.tag(.vE1_V6(tag)))
                     }
                     return nil
                 }
                 return nil
-            case 0xF0: // Handle F0(Legacy Advertisement)
+            case 0x06: // Handle V6(Legacy Advertisement)
 
                 if manufacturerData.count > 19 && manufacturerData.count < 31 {
-                    let ruuvi = manufacturerData.ruuviF0()
+                    let ruuvi = manufacturerData.ruuvi6()
                     deviceRegistry.registerLegacyUUID(mac: ruuvi.mac, uuid: uuid)
-                    let tag = RuuviDataE0_F0(
+                    let tag = RuuviDataE1_V6(
                         uuid: uuid,
                         serviceUUID: serviceUUID,
                         rssi: rssi.intValue,
@@ -347,103 +347,94 @@ public class RuuviDecoderiOS: BTDecoder {
                         humidity: ruuvi.humidity,
                         temperature: ruuvi.temperature,
                         pressure: ruuvi.pressure,
-                        pm1: ruuvi.pm1,
-                        pm2_5: ruuvi.pm2_5,
-                        pm4: ruuvi.pm4,
-                        pm10: ruuvi.pm10,
+                        pm25: ruuvi.pm25,
                         co2: ruuvi.co2,
                         voc: ruuvi.voc,
                         nox: ruuvi.nox,
                         luminance: ruuvi.luminance,
-                        dbaAvg: ruuvi.dbaAvg,
-                        dbaPeak: ruuvi.dbaPeak,
                         sequence: ruuvi.measurementSequenceNumber,
                         mac: ruuvi.mac
                     )
 
-                    return !supportsExtendedAdv ? .ruuvi(.tag(.vE0_F0(tag))) : nil
+                    return !supportsExtendedAdv ? .ruuvi(.tag(.vE1_V6(tag))) : nil
 
                 } else if manufacturerData.count > 31 {
                     // Merged Legacy + Extended advertisement:
-                    // The same manufacturerData block contains F0 portion + E0 portion.
+                    // The same manufacturerData block contains V6 portion + E1 portion.
                     // Therefore we will split the data into two parts and return them based on device
                     // extended adv scan capabilities.
 
-                    // First 22 bytes => F0 data
-                    let f0Length = 22
-                    let f0Data = manufacturerData.prefix(f0Length)
-                    let ruuviF0 = f0Data.ruuviF0()
+                    // First 22 bytes => V6 data
+                    let v6Length = 22
+                    let v6Data = manufacturerData.prefix(v6Length)
+                    let ruuvi6 = v6Data.ruuvi6()
 
-                    let tagF0 = RuuviDataE0_F0(
+                    let tag6 = RuuviDataE1_V6(
                         uuid: uuid,
                         serviceUUID: serviceUUID,
                         rssi: rssi.intValue,
                         isConnectable: isConnectable && !isConnected,
                         version: Int(version),
-                        humidity: ruuviF0.humidity,
-                        temperature: ruuviF0.temperature,
-                        pressure: ruuviF0.pressure,
-                        pm1: ruuviF0.pm1,
-                        pm2_5: ruuviF0.pm2_5,
-                        pm4: ruuviF0.pm4,
-                        pm10: ruuviF0.pm10,
-                        co2: ruuviF0.co2,
-                        voc: ruuviF0.voc,
-                        nox: ruuviF0.nox,
-                        luminance: ruuviF0.luminance,
-                        dbaAvg: ruuviF0.dbaAvg,
-                        dbaPeak: ruuviF0.dbaPeak,
-                        sequence: ruuviF0.measurementSequenceNumber,
-                        mac: ruuviF0.mac
+                        humidity: ruuvi6.humidity,
+                        temperature: ruuvi6.temperature,
+                        pressure: ruuvi6.pressure,
+                        pm25: ruuvi6.pm25,
+                        co2: ruuvi6.co2,
+                        voc: ruuvi6.voc,
+                        nox: ruuvi6.nox,
+                        luminance: ruuvi6.luminance,
+                        dbaAvg: ruuvi6.dbaAvg,
+                        sequence: ruuvi6.measurementSequenceNumber,
+                        mac: ruuvi6.mac
                     )
-                    deviceRegistry.registerLegacyUUID(mac: tagF0.mac, uuid: uuid)
+                    deviceRegistry.registerLegacyUUID(mac: tag6.mac, uuid: uuid)
 
-                    // Remaining data => E0 portion
-                    let e0Data = manufacturerData.subdata(in: f0Length..<manufacturerData.count)
+                    // Remaining data => E1 portion
+                    let e1Data = manufacturerData.subdata(in: v6Length..<manufacturerData.count)
 
-                    // If E0 portion is invalid, fallback to returning F0
-                    if e0Data.count <= 31 && !supportsExtendedAdv {
-                        return .ruuvi(.tag(.vE0_F0(tagF0)))
+                    // If E1 portion is invalid, fallback to returning v6
+                    if e1Data.count <= 31 && !supportsExtendedAdv {
+                        return .ruuvi(.tag(.vE1_V6(tag6)))
                     }
 
-                    // Build "completeE0Data" by reusing the 2-byte (0x99, 0x04) header
-                    var completeE0Data = Data()
+                    // Build "completeE1Data" by reusing the 2-byte (0x99, 0x04) header
+                    var completeE1Data = Data()
                     // Add the 2-byte header from the original manufacturerData
-                    // We need this to build the complete E0 data that will be used to
-                    // pass to the ruuviE0() method which requires the header.
-                    completeE0Data.append(manufacturerData.prefix(2))
-                    // Then append the leftover E0 bytes
-                    completeE0Data.append(e0Data)
+                    // We need this to build the complete E1 data that will be used to
+                    // pass to the ruuviE1() method which requires the header.
+                    completeE1Data.append(manufacturerData.prefix(2))
+                    // Then append the leftover E1 bytes
+                    completeE1Data.append(e1Data)
 
-                    let ruuviE0 = completeE0Data.ruuviE0()
-                    let tagE0 = RuuviDataE0_F0(
+                    let ruuviE1 = completeE1Data.ruuviE1()
+                    let tagE1 = RuuviDataE1_V6(
                         uuid: uuid,
                         serviceUUID: serviceUUID,
                         rssi: rssi.intValue,
                         isConnectable: isConnectable && !isConnected,
-                        version: Int(e0Data[0]), // read from E0 portion
-                        humidity: ruuviE0.humidity,
-                        temperature: ruuviE0.temperature,
-                        pressure: ruuviE0.pressure,
-                        pm1: ruuviE0.pm1,
-                        pm2_5: ruuviE0.pm2_5,
-                        pm4: ruuviE0.pm4,
-                        pm10: ruuviE0.pm10,
-                        co2: ruuviE0.co2,
-                        voc: ruuviE0.voc,
-                        nox: ruuviE0.nox,
-                        luminance: ruuviE0.luminance,
-                        dbaAvg: ruuviE0.dbaAvg,
-                        dbaPeak: ruuviE0.dbaPeak,
-                        sequence: ruuviE0.measurementSequenceNumber,
-                        voltage: ruuviE0.voltage,
-                        mac: ruuviE0.mac
+                        version: Int(e1Data[0]), // read from E1 portion
+                        humidity: ruuviE1.humidity,
+                        temperature: ruuviE1.temperature,
+                        pressure: ruuviE1.pressure,
+                        pm1: ruuviE1.pm1,
+                        pm25: ruuviE1.pm25,
+                        pm4: ruuviE1.pm4,
+                        pm10: ruuviE1.pm10,
+                        co2: ruuviE1.co2,
+                        voc: ruuviE1.voc,
+                        nox: ruuviE1.nox,
+                        luminance: ruuviE1.luminance,
+                        dbaInstant: ruuviE1.dbaInstant,
+                        dbaAvg: ruuviE1.dbaAvg,
+                        dbaPeak: ruuviE1.dbaPeak,
+                        sequence: ruuviE1.measurementSequenceNumber,
+                        mac: ruuviE1.mac
                     )
 
                     if supportsExtendedAdv && !isConnected {
-                        return .ruuvi(.tag(.vE0_F0(tagE0)))
+                        return .ruuvi(.tag(.vE1_V6(tagE1)))
                     } else {
-                        return .ruuvi(.tag(.vE0_F0(tagF0)))
+                        return .ruuvi(.tag(.vE1_V6(tag6)))
                     }
                 }
 
@@ -597,21 +588,48 @@ extension Data {
 }
 
 class RuuviDeviceRegistry {
-    // Map from MAC address to the UUID from legacy (F0) advertisements
+    // Map from MAC address to the UUID from legacy (v6) advertisements
     private var macToLegacyUUID: [String: String] = [:]
 
-    // Store the F0 UUID for a given MAC address
+    // Store the v6 UUID for a given MAC address
     func registerLegacyUUID(mac: String, uuid: String) {
         macToLegacyUUID[mac] = uuid
     }
 
-    // Get the F0 UUID for a given MAC address
+    // Get the v6 UUID for a given MAC address, supporting partial MAC matching
     func getLegacyUUID(for mac: String) -> String? {
-        return macToLegacyUUID[mac]
+        // First try exact match
+        if let uuid = macToLegacyUUID[mac] {
+            return uuid
+        }
+        
+        // If mac is a full MAC (6 segments), try matching with partial MACs (last 3 bytes)
+        if mac.components(separatedBy: ":").count == 6 {
+            let macComponents = mac.components(separatedBy: ":")
+            let lastThreeBytes = macComponents.suffix(3).joined(separator: ":")
+            if let uuid = macToLegacyUUID[lastThreeBytes] {
+                return uuid
+            }
+        }
+        
+        // If mac is a partial MAC (3 segments), try matching with full MACs
+        if mac.components(separatedBy: ":").count == 3 {
+            for (fullMac, uuid) in macToLegacyUUID {
+                let fullMacComponents = fullMac.components(separatedBy: ":")
+                if fullMacComponents.count == 6 {
+                    let lastThreeBytes = fullMacComponents.suffix(3).joined(separator: ":")
+                    if lastThreeBytes == mac {
+                        return uuid
+                    }
+                }
+            }
+        }
+        
+        return nil
     }
 
-    // Check if we have a registered F0 UUID for this MAC
+    // Check if we have a registered v6 UUID for this MAC
     func hasLegacyUUID(for mac: String) -> Bool {
-        return macToLegacyUUID[mac] != nil
+        return getLegacyUUID(for: mac) != nil
     }
 }
