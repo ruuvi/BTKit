@@ -1013,40 +1013,49 @@ extension BTBackgroundScanneriOS: CBPeripheralDelegate {
         guard let characteristics = service.characteristics else { return }
         services
             .filter({ $0.uuid == service.uuid })
-            .compactMap({ (handler) -> BTUARTService? in
-                return handler as? BTUARTService
-            }).forEach { (handler) in
-                if let tx = characteristics.first(where: { $0.uuid == handler.txUUID }),
-                    let rx = characteristics.first(where: { $0.uuid == handler.rxUUID }) {
-                    uartRegistrations.update(with: UARTRegistration(service: service, peripheral: peripheral, tx: tx, rx: rx))
-                    if tx.properties.contains(.notify) {
-                        peripheral.setNotifyValue(true, for: tx)
-                    }
-                }
-            }
-        services
-            .filter({ $0.uuid == service.uuid })
             .compactMap({ handler -> DeviceInformationService? in
                 return handler as? DeviceInformationService
             }).forEach { handler in
-                if let firmwareRevision = characteristics.first(where: { $0.uuid == handler.firmwareRevision  || $0.uuid == handler.serialRevision }) {
-                    gattRegistrations.update(with: GATTRegistration(service: service, peripheral: peripheral, characteristic: firmwareRevision))
+                // Find firmware revision characteristic specifically
+                if let firmwareChar = characteristics.first(where: { $0.uuid == handler.firmwareRevision }) {
+                    gattRegistrations.update(with: GATTRegistration(service: service, peripheral: peripheral, characteristic: firmwareChar))
                     gattRegistrations
-                    .filter({
-                        $0.peripheral == peripheral && $0.service == firmwareRevision.service
-                    }).forEach({ registration in
-                        registration.isReady = true
-                        observations.gattService.values
-                            .filter( {
-                                let isPeripheral = $0.uuid == peripheral.identifier.uuidString
-                                let isService = $0.type.uuid == registration.service.uuid
-                                let isCharacteristic = firmwareRevision.uuid == $0.type.characteristic
-                                return isPeripheral && isService && isCharacteristic
-                            })
-                            .forEach( {
-                                requestService(observation: $0, registration: registration)
-                            })
-                    })
+                        .filter({
+                            $0.peripheral == peripheral && $0.service == firmwareChar.service
+                        }).forEach({ registration in
+                            registration.isReady = true
+                            observations.gattService.values
+                                .filter( {
+                                    let isPeripheral = $0.uuid == peripheral.identifier.uuidString
+                                    let isService = $0.type.uuid == registration.service.uuid
+                                    let isCharacteristic = firmwareChar.uuid == $0.type.characteristic
+                                    return isPeripheral && isService && isCharacteristic
+                                })
+                                .forEach( {
+                                    requestService(observation: $0, registration: registration)
+                                })
+                        })
+                }
+
+                // Find serial revision characteristic specifically
+                if let serialChar = characteristics.first(where: { $0.uuid == handler.serialRevision }) {
+                    gattRegistrations.update(with: GATTRegistration(service: service, peripheral: peripheral, characteristic: serialChar))
+                    gattRegistrations
+                        .filter({
+                            $0.peripheral == peripheral && $0.service == serialChar.service
+                        }).forEach({ registration in
+                            registration.isReady = true
+                            observations.gattService.values
+                                .filter( {
+                                    let isPeripheral = $0.uuid == peripheral.identifier.uuidString
+                                    let isService = $0.type.uuid == registration.service.uuid
+                                    let isCharacteristic = serialChar.uuid == $0.type.characteristic
+                                    return isPeripheral && isService && isCharacteristic
+                                })
+                                .forEach( {
+                                    requestService(observation: $0, registration: registration)
+                                })
+                        })
                 }
             }
         observations.gattService.forEach { enableWatchdogForServiceTimeout(observation: $0.value) }
