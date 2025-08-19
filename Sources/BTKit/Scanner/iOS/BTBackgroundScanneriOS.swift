@@ -1009,8 +1009,29 @@ extension BTBackgroundScanneriOS: CBPeripheralDelegate {
         observations.uartService.forEach { enableWatchdogForServiceTimeout(observation: $0.value) }
     }
 
-    func peripheral(_ peripheral: CBPeripheral, didDiscoverCharacteristicsFor service: CBService, error: Error?) {
+    func peripheral(
+        _ peripheral: CBPeripheral,
+        didDiscoverCharacteristicsFor service: CBService,
+        error: Error?
+    ) {
         guard let characteristics = service.characteristics else { return }
+
+        // Handle UART Services
+        services
+            .filter({ $0.uuid == service.uuid })
+            .compactMap({ (handler) -> BTUARTService? in
+                return handler as? BTUARTService
+            }).forEach { (handler) in
+                if let tx = characteristics.first(where: { $0.uuid == handler.txUUID }),
+                    let rx = characteristics.first(where: { $0.uuid == handler.rxUUID }) {
+                    uartRegistrations.update(with: UARTRegistration(service: service, peripheral: peripheral, tx: tx, rx: rx))
+                    if tx.properties.contains(.notify) {
+                        peripheral.setNotifyValue(true, for: tx)
+                    }
+                }
+            }
+
+        // Handle Device Information Services (for firmware version)
         services
             .filter({ $0.uuid == service.uuid })
             .compactMap({ handler -> DeviceInformationService? in
@@ -1058,6 +1079,7 @@ extension BTBackgroundScanneriOS: CBPeripheralDelegate {
                         })
                 }
             }
+
         observations.gattService.forEach { enableWatchdogForServiceTimeout(observation: $0.value) }
         observations.uartService.forEach { enableWatchdogForServiceTimeout(observation: $0.value) }
     }
