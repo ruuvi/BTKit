@@ -747,6 +747,7 @@ public struct RuuviTagEnvLogFull {
     public var soundAvg: Double?
     public var soundPeak: Double?
     public var batteryVoltage: Double?
+    public var measurementSequenceNumber: Int?
 }
 
 class RuuviTagEnvLogFullClass {
@@ -768,4 +769,5 @@ class RuuviTagEnvLogFullClass {
     var soundAvg: Double?
     var soundPeak: Double?
     var batteryVoltage: Double?
+    var measurementSequenceNumber: Int?
 }

@@ -890,8 +890,8 @@ public extension Data {
         let timestampLE  = UInt32(bigEndian: timestampBE)
         let date = Date(timeIntervalSince1970: TimeInterval(timestampLE))
 
-        // Extract FLAGS byte (Byte 32) - contains 9th bits for UINT9 values
-        let flagsByte = self.count > 32 ? self[32] : 0
+        // Extract FLAGS byte (Byte 30) - contains 9th bits for UINT9 values
+        let flagsByte = self[30]
         let dbaInstantFlag = isBitSet(byte: flagsByte, bitIndex: 3)
         let dbaAvgFlag = isBitSet(byte: flagsByte, bitIndex: 4)
         let dbaPeakFlag = isBitSet(byte: flagsByte, bitIndex: 5)
@@ -917,72 +917,51 @@ public extension Data {
         }
 
         // PM1.0 to PM10 (Bytes 11-18)
-        let pm1 = self.toUInt16(from: 11).map { $0 == UInt16.max ? nil : Double($0) * 0.1 } ?? nil
-        let pm25 = self.toUInt16(from: 13).map { $0 == UInt16.max ? nil : Double($0) * 0.1 } ?? nil
-        let pm4 = self.toUInt16(from: 15).map { $0 == UInt16.max ? nil : Double($0) * 0.1 } ?? nil
-        let pm10 = self.toUInt16(from: 17).map { $0 == UInt16.max ? nil : Double($0) * 0.1 } ?? nil
+        let pm1  = self.toUInt16(from: 11).map { $0 == UInt16.max ? nil : Double($0) * 0.1 } ?? 0
+        let pm25 = self.toUInt16(from: 13).map { $0 == UInt16.max ? nil : Double($0) * 0.1 } ?? 0
+        let pm4  = self.toUInt16(from: 15).map { $0 == UInt16.max ? nil : Double($0) * 0.1 } ?? 0
+        let pm10 = self.toUInt16(from: 17).map { $0 == UInt16.max ? nil : Double($0) * 0.1 } ?? 0
 
         // CO2 (Bytes 19-20)
-        let co2 = self.toUInt16(from: 19).map { $0 == UInt16.max ? nil : Double($0) } ?? nil
+        let co2 = self.toUInt16(from: 19).map { $0 == UInt16.max ? nil : Double($0) } ?? 0
 
         // VOC (UINT9: Byte 21 + FLAGS bit 6)
-        var voc: Double?
-        if self.count > 21 {
-            let vocBaseByte = self[21]
-            let vocValue = (UInt16(vocBaseByte) << 1) | (vocFlag ? 1 : 0)
-            voc = vocValue == 511 ? nil : Double(vocValue)
-        } else {
-            voc = nil
-        }
+        let vocBaseByte = self[21]
+        let vocValue = (UInt16(vocBaseByte) << 1) | (vocFlag ? 1 : 0)
+        let voc = vocValue == 511 ? nil : Double(vocValue)
 
         // NOX (UINT9: Byte 22 + FLAGS bit 7)
-        var nox: Double?
-        if self.count > 22 {
-            let noxBaseByte = self[22]
-            let noxValue = (UInt16(noxBaseByte) << 1) | (noxFlag ? 1 : 0)
-            nox = noxValue == 511 ? nil : Double(noxValue)
-        } else {
-            nox = nil
-        }
+        let noxBaseByte = self[22]
+        let noxValue = (UInt16(noxBaseByte) << 1) | (noxFlag ? 1 : 0)
+        let nox = noxValue == 511 ? nil : Double(noxValue)
 
         // Luminance (UINT24: Bytes 23-25)
         var luminance: Double?
-        if self.count > 25 {
-            let lumiValue = (UInt32(self[23]) << 16) | (UInt32(self[24]) << 8) | UInt32(self[25])
-            luminance = lumiValue == 0xFFFFFF ? nil : Double(lumiValue) * 0.01
-        } else {
-            luminance = nil
-        }
+        let lumiValue = (UInt32(self[23]) << 16) | (UInt32(self[24]) << 8) | UInt32(self[25])
+        luminance = lumiValue == 0xFFFFFF ? nil : Double(lumiValue) * 0.01
 
         // dBA Instant (UINT9: Byte 26 + FLAGS bit 3)
         var dbaInstant: Double?
-        if self.count > 26 {
-            let dbaInstantByte = self[26]
-            let dbaInstantValue = (UInt16(dbaInstantByte) << 1) | (dbaInstantFlag ? 1 : 0)
-            dbaInstant = dbaInstantValue == 511 ? nil : (Double(dbaInstantValue) * 0.2 + 18.0)
-        } else {
-            dbaInstant = nil
-        }
+        let dbaInstantByte = self[26]
+        let dbaInstantValue = (UInt16(dbaInstantByte) << 1) | (dbaInstantFlag ? 1 : 0)
+        dbaInstant = dbaInstantValue == 511 ? nil : (Double(dbaInstantValue) * 0.2 + 18.0)
 
         // dBA Avg (UINT9: Byte 27 + FLAGS bit 4)
         var dbaAvg: Double?
-        if self.count > 27 {
-            let dbaAvgByte = self[27]
-            let dbaAvgValue = (UInt16(dbaAvgByte) << 1) | (dbaAvgFlag ? 1 : 0)
-            dbaAvg = dbaAvgValue == 511 ? nil : (Double(dbaAvgValue) * 0.2 + 18.0)
-        } else {
-            dbaAvg = nil
-        }
+        let dbaAvgByte = self[27]
+        let dbaAvgValue = (UInt16(dbaAvgByte) << 1) | (dbaAvgFlag ? 1 : 0)
+        dbaAvg = dbaAvgValue == 511 ? nil : (Double(dbaAvgValue) * 0.2 + 18.0)
 
         // dBA Peak (UINT9: Byte 28 + FLAGS bit 5)
         var dbaPeak: Double?
-        if self.count > 28 {
-            let dbaPeakByte = self[28]
-            let dbaPeakValue = (UInt16(dbaPeakByte) << 1) | (dbaPeakFlag ? 1 : 0)
-            dbaPeak = dbaPeakValue == 511 ? nil : (Double(dbaPeakValue) * 0.2 + 18.0)
-        } else {
-            dbaPeak = nil
-        }
+        let dbaPeakByte = self[28]
+        let dbaPeakValue = (UInt16(dbaPeakByte) << 1) | (dbaPeakFlag ? 1 : 0)
+        dbaPeak = dbaPeakValue == 511 ? nil : (Double(dbaPeakValue) * 0.2 + 18.0)
+
+        // Measurement Sequence Number (UINT24: Bytes 29-31)
+        var measurementSequenceNumber: Int
+        let seqValue = (UInt32(self[29]) << 16) | (UInt32(self[30]) << 8) | UInt32(self[31])
+        measurementSequenceNumber = seqValue == 0xFFFFFF ? 0 : Int(seqValue)
 
         let record = RuuviTagEnvLogFull(
             date: date,
@@ -1000,9 +979,9 @@ public extension Data {
             soundInstant: dbaInstant,
             soundAvg: dbaAvg,
             soundPeak: dbaPeak,
-            batteryVoltage: nil
+            batteryVoltage: nil,
+            measurementSequenceNumber: measurementSequenceNumber
         )
-
         return record
     }
 
