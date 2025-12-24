@@ -2,6 +2,10 @@ import Foundation
 import CoreBluetooth
 import AVFoundation
 
+protocol BTBackgroundScannerServiceState: AnyObject {
+    func hasActiveUARTService(uuid: String) -> Bool
+}
+
 class BTBackgroundScanneriOS: NSObject, BTBackgroundScanner {
 
     var bluetoothState: BTScannerState = .unknown
@@ -836,6 +840,18 @@ extension BTBackgroundScanneriOS {
                 self?.stopIfNeeded()
             }
         }
+    }
+}
+
+extension BTBackgroundScanneriOS: BTBackgroundScannerServiceState {
+    func hasActiveUARTService(uuid: String) -> Bool {
+        let check = {
+            self.observations.uartService.values.contains { $0.uuid == uuid }
+        }
+        if DispatchQueue.getSpecific(key: queueKey) == queueId {
+            return check()
+        }
+        return queue.sync { check() }
     }
 }
 

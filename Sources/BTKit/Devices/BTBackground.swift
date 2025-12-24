@@ -17,6 +17,10 @@ public struct BTBackground {
         return scanner.isConnected(uuid: uuid)
     }
 
+    public func hasActiveUARTService(uuid: String) -> Bool {
+        (scanner as? BTBackgroundScannerServiceState)?.hasActiveUARTService(uuid: uuid) ?? false
+    }
+
     @discardableResult
     public func readRSSI<T: AnyObject>(for observer: T, uuid: String, options: BTScannerOptionsInfo? = nil, result: @escaping (T, Result<Int, BTError>) -> Void) -> ObservationToken? {
         if scanner.isConnected(uuid: uuid) {

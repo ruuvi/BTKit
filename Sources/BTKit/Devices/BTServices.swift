@@ -326,26 +326,37 @@ public struct BTGATTService {
         progress?(.connecting)
         connectToken = BTKit.background.connect(for: observer, uuid: uuid, options: options, connected: { (observer, connectResult) in
             connectToken?.invalidate()
-            switch connectResult {
-            case .already, .just:
+            func serveAndFinish(didConnect: Bool) {
                 var serveToken: ObservationToken?
                 progress?(.serving)
                 serveToken = self.serve(observer, uuid, type, options) { observer, serveResult in
                     serveToken?.invalidate()
-                    var disconnectToken: ObservationToken?
-                    progress?(.disconnecting)
-                    disconnectToken = BTKit.background.disconnect(for: observer, uuid: uuid, options: options) { (observer, disconnectResult) in
-                        disconnectToken?.invalidate()
-                        switch disconnectResult {
-                        case .already, .just, .stillConnected, .bluetoothWasPoweredOff:
-                            progress?(.success)
-                            result(observer, serveResult)
-                        case .failure(let error):
-                            progress?(.failure(error))
-                            result(observer, .failure(error))
+                    let hasActiveUART = BTKit.background.hasActiveUARTService(uuid: uuid)
+                    if didConnect && !hasActiveUART {
+                        var disconnectToken: ObservationToken?
+                        progress?(.disconnecting)
+                        disconnectToken = BTKit.background.disconnect(for: observer, uuid: uuid, options: options) { (observer, disconnectResult) in
+                            disconnectToken?.invalidate()
+                            switch disconnectResult {
+                            case .already, .just, .stillConnected, .bluetoothWasPoweredOff:
+                                progress?(.success)
+                                result(observer, serveResult)
+                            case .failure(let error):
+                                progress?(.failure(error))
+                                result(observer, .failure(error))
+                            }
                         }
+                    } else {
+                        progress?(.success)
+                        result(observer, serveResult)
                     }
                 }
+            }
+            switch connectResult {
+            case .already:
+                serveAndFinish(didConnect: false)
+            case .just:
+                serveAndFinish(didConnect: true)
             case .failure(let error):
                 progress?(.failure(error))
                 result(observer, .failure(error))
