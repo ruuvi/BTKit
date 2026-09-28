@@ -414,7 +414,7 @@ public extension Data {
             voc = nil
         } else {
             let vocValue = (UInt16(vocBaseByte) << 1) | (vocFlag ? 1 : 0)
-            voc = vocValue == 511 ? nil : Double(vocValue)
+            voc = vocValue >= 1 && vocValue <= 500 ? Double(vocValue) : nil
         }
 
         // NOX (UINT9: Byte 14 + FLAGS bit 7)
@@ -424,7 +424,7 @@ public extension Data {
             nox = nil
         } else {
             let noxValue = (UInt16(noxBaseByte) << 1) | (noxFlag ? 1 : 0)
-            nox = noxValue == 511 ? nil : Double(noxValue)
+            nox = noxValue >= 1 && noxValue <= 500 ? Double(noxValue) : nil
         }
 
         // Luminance (Byte 15)
@@ -508,12 +508,12 @@ public extension Data {
         // VOC (UINT9: Byte 19 + FLAGS bit 6)
         let vocBaseByte = self[19]
         let vocValue = (UInt16(vocBaseByte) << 1) | (vocFlag ? 1 : 0)
-        let voc = vocValue == 511 ? nil : Double(vocValue)
+        let voc = vocValue >= 1 && vocValue <= 500 ? Double(vocValue) : nil
 
         // NOX (UINT9: Byte 20 + FLAGS bit 7)
         let noxBaseByte = self[20]
         let noxValue = (UInt16(noxBaseByte) << 1) | (noxFlag ? 1 : 0)
-        let nox = noxValue == 511 ? nil : Double(noxValue)
+        let nox = noxValue >= 1 && noxValue <= 500 ? Double(noxValue) : nil
 
         // Luminance (UINT24: Bytes 21-23)
         var luminance: Double?
@@ -827,12 +827,12 @@ public extension Data {
         // VOC (UINT9: Byte 17 + FLAGS bit 6)
         let vocBaseByte = self[17]
         let vocValue = (UInt16(vocBaseByte) << 1) | (vocFlag ? 1 : 0)
-        let voc = vocValue == 511 ? nil : Double(vocValue)
+        let voc = vocValue >= 1 && vocValue <= 500 ? Double(vocValue) : nil
 
         // NOX (UINT9: Byte 18 + FLAGS bit 7)
         let noxBaseByte = self[18]
         let noxValue = (UInt16(noxBaseByte) << 1) | (noxFlag ? 1 : 0)
-        let nox = noxValue == 511 ? nil : Double(noxValue)
+        let nox = noxValue >= 1 && noxValue <= 500 ? Double(noxValue) : nil
 
         // Luminance (UINT24: Bytes 19-21)
         var luminance: Double?
@@ -928,12 +928,12 @@ public extension Data {
         // VOC (UINT9: Byte 21 + FLAGS bit 6)
         let vocBaseByte = self[21]
         let vocValue = (UInt16(vocBaseByte) << 1) | (vocFlag ? 1 : 0)
-        let voc = vocValue == 511 ? nil : Double(vocValue)
+        let voc = vocValue >= 1 && vocValue <= 500 ? Double(vocValue) : nil
 
         // NOX (UINT9: Byte 22 + FLAGS bit 7)
         let noxBaseByte = self[22]
         let noxValue = (UInt16(noxBaseByte) << 1) | (noxFlag ? 1 : 0)
-        let nox = noxValue == 511 ? nil : Double(noxValue)
+        let nox = noxValue >= 1 && noxValue <= 500 ? Double(noxValue) : nil
 
         // Luminance (UINT24: Bytes 23-25)
         var luminance: Double?
