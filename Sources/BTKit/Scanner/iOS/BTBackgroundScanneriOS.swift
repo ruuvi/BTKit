@@ -1011,13 +1011,28 @@ extension BTBackgroundScanneriOS: CBPeripheralDelegate {
     }
 
     func peripheral(_ peripheral: CBPeripheral, didDiscoverServices error: Error?) {
-        guard let discovered = peripheral.services else { return }
-        for d in discovered {
-            if let service = services.first(where: { $0.uuid == d.uuid }) {
+        guard error == nil,
+              peripheral.state == .connected,
+              let peripheralServices = peripheral.services else { return }
+
+        // CoreBluetooth owns `peripheral.services` and can invalidate it as the
+        // connection changes. Copy both collections before starting additional
+        // discovery requests so the loop never observes a changing backing store.
+        let discoveredServices = peripheralServices.map { $0 }
+        let supportedServices = services.map { $0 }
+
+        for discoveredService in discoveredServices {
+            if let service = supportedServices.first(where: { $0.uuid == discoveredService.uuid }) {
                 if let uart = service as? BTUARTService {
-                    peripheral.discoverCharacteristics([uart.txUUID, uart.rxUUID], for: d)
+                    peripheral.discoverCharacteristics(
+                        [uart.txUUID, uart.rxUUID],
+                        for: discoveredService
+                    )
                 } else if let deviceInformation = service as? DeviceInformationService {
-                    peripheral.discoverCharacteristics([deviceInformation.firmwareRevision, deviceInformation.serialRevision], for: d)
+                    peripheral.discoverCharacteristics(
+                        [deviceInformation.firmwareRevision, deviceInformation.serialRevision],
+                        for: discoveredService
+                    )
                 }
             }
         }
